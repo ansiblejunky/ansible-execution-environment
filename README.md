@@ -39,8 +39,8 @@ Let's first define our execution environment using the template.
 ---
 version: 1
 
-#build_arg_defaults:
-#  EE_BASE_IMAGE: 'quay.io/ansible/ansible-runner:stable-2.10-devel'
+build_arg_defaults:
+  EE_BASE_IMAGE: 'quay.io/ansible/ansible-runner:latest'
 
 ansible_config: 'ansible.cfg'
 
@@ -59,26 +59,45 @@ additional_build_steps:
     - RUN ls -la /etc
 ```
 
-Now let's run `ansible-builder` to create the image based on our template. Note that Podman is used by default to build images - we will use Docker instead. Also the default name for the container image being built is `ansible-execution-env` unless you override this with the `--tag=tagname` argument.
+Now let's run `ansible-builder` to create the image based on our template. Note that Podman is used by default to build images but we will use Docker instead. Also the default name and tag for the container image being built is `ansible-execution-env:latest` but it's highly recommended that you avoid using "latest" and set your own tag/version using the `--tag` argument.
 
 ```yaml
-ansible-builder build --container-runtime=docker
+ansible-builder build --container-runtime=docker --tag ansible-execution-env:1.0
 ```
 
-Docker now has the `ansible-execution-env` image created:
+Docker now has the `ansible-execution-env` image created with tag `1.0`:
 
 ```yaml
 $ docker image list
 REPOSITORY                            TAG             IMAGE ID       CREATED         SIZE
-ansible-execution-env                 latest          9fec21fe39be   2 minutes ago   987MB
+ansible-execution-env                 1.0             9fec21fe39be   2 hours ago     987MB
 ```
 
 ## Run the image
 
-By default, `ansible-navigator` uses a container runtime (podman or docker, whichever it finds first) and runs Ansible within an execution environment (a pre-built container image which includes ansible-core along with a set of Ansible collections). This default behavior can be disabled by starting ansible-navigator with `--execution-environment false`. In this case, Ansible and any collections needed must be installed manually on the system.
+We use `ansible-navigator` to start a container by pulling the image we built and running Ansible playbook within it.
 
-We will now try to run a playbook using `ansible-navigator` and leverage our new execution environment image we created.
+So let's try to run our playbook using `ansible-navigator`. Set the default container runtime using the `--container-engine docker` argument. Point the tool to the execution environment image name by using the `--execution-environment-image` argument along with the image name and tag. This is where it's important to not use "latest" as the tag so we ensure Docker knows where to grab the image.
 
 ```yaml
-ansible-navigator run playbook.yml --container-engine docker --execution-environment-image ansible-execution-env 
+ansible-navigator run playbook.yml --container-engine docker --execution-environment-image ansible-execution-env:1.0
+```
+
+The tool launches the container, runs the playbook and shows an interactive screen where you can watch the playbook run through.
+
+To quit the tool, use similar mechanism `:q!` like within a `vi` editor.
+
+## Scan the image
+
+Don't forget security! Use the docker command to scan the image you built to ensure it's safe to use. To use this feature you need to login to Docker Hub and Synk (see below commands).
+
+```yaml
+# Login to Docker Hub
+docker login
+
+# Login to Synk
+docker scan --login
+
+# Scan the image
+docker scan ansible-execution-env:1.0
 ```
