@@ -1,2 +1,2 @@
-subversion [platform:rpm]
-subversion [platform:dpkg]
+git [platform:rpm]
+git [platform:dpkg]

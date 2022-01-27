@@ -2,14 +2,40 @@
 version: 1
 
 build_arg_defaults:
-  EE_BASE_IMAGE: 'quay.io/ansible/ansible-runner:latest'
-  #EE_BASE_IMAGE: 'registry.redhat.io/ansible-automation-platform-21/ee-minimal-rhel8:latest'
+  # ----> Quay Registry
+  # Ensure you authorize docker with this registry. 
+  # 1. Go to https://quay.io/ and login or create an account
+  # 2. Navigate to top-right for Account Settings
+  # 3. Select the tool icon on the left
+  # 4. Set the Docker CLI Password to enable encrypted passwords
+  # 5. Generate the encryped password (re-enter the password)
+  # 6. Select the option "Docker Login" to get the CLI command
+  # 5. Run the CLI login command to have docker authorized to pull from quay registry
+  #EE_BASE_IMAGE: 'quay.io/ansible/ansible-runner:latest'
+
+  # ----> Red Hat Registry
+  # Ensure you perform docker login command to authorize with this registry. Go to
+  # 1. Go to https://access.redhat.com/terms-based-registry/
+  # 2. Create registry service account (if not already created)
+  # 3. Drill down on existing service account
+  # 4. Select "Docker Login" tab and copy login command and run it locally to authenticate
+  # Troubleshooting Authentication Issues with registry.redhat.io
+  # https://access.redhat.com/articles/3560571
+  EE_BASE_IMAGE: 'registry.redhat.io/ansible-automation-platform-21/ee-minimal-rhel8:latest'
 
 ansible_config: 'ansible.cfg'
 
 dependencies:
+  # Ansible dependencies
+  # Pull down ansible roles and collections required by your playbooks
   galaxy: requirements.yml
+
+  # Python requirements
+  # Reference ansible collections to know what python packages you need
   python: requirements.txt
+
+  # System binary depenencies
+  # For example, ansible collections might require base packages installed
   system: bindep.txt
 
 additional_build_steps:

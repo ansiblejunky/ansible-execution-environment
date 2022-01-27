@@ -2,6 +2,8 @@
 
 Basic information to help you get familiar with Ansible Execution Environments and the latest Ansible Automation Platform.
 
+General information on [execution environments](https://docs.ansible.com/automation-controller/latest/html/userguide/ee_reference.html).
+
 ## Prerequisites
 
 ### Ansible Builder
