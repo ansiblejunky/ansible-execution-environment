@@ -1,6 +1,11 @@
-awxkit>=13.0.0
-boto>=2.49.0
-botocore>=1.12.249
-boto3>=1.9.249
-openshift>=0.6.2
-requests-oauthlib 
+# Python Dependencies for Ansible Collections
+# Only declare dependencies here for modules not already listed in the `requirements.txt`
+# that resides within the collection repository. For example:
+# Azure Collection python dependencies [requirements.txt]
+# https://github.com/ansible-collections/azure/blob/v1.12.0/requirements-azure.txt
+
+# Python Dependencies for Ansible Modules/Roles
+# <list them here>
+
+# Other Dependencies
+# <list them here>

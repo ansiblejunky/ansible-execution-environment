@@ -6,16 +6,21 @@ General information on [execution environments](https://docs.ansible.com/automat
 
 ## Prerequisites
 
+### Images and Containers
+
+- [https://stackoverflow.com/a/51660942](What are image layers?)
+- [https://docs.docker.com/develop/develop-images/dockerfile_best-practices/](Best Practices for Writing Dockerfiles)
+
 ### Ansible Builder
 
-https://www.ansible.com/blog/introduction-to-ansible-builder
-https://ansible-builder.readthedocs.io/en/latest/index.html
-https://github.com/ansible/ansible-builder
+- https://www.ansible.com/blog/introduction-to-ansible-builder
+- https://ansible-builder.readthedocs.io/en/latest/index.html
+- https://github.com/ansible/ansible-builder
 
 ### Ansible Navigator
 
-https://github.com/ansible/ansible-navigator/
-https://github.com/ansible/ansible-navigator/blob/main/docs/settings.rst
+- https://github.com/ansible/ansible-navigator/
+- https://github.com/ansible/ansible-navigator/blob/main/docs/settings.rst
 
 ## Installation
 
@@ -64,7 +69,7 @@ additional_build_steps:
 Now let's run `ansible-builder` to create the image based on our template. Note that Podman is used by default to build images but we will use Docker instead. Also the default name and tag for the container image being built is `ansible-execution-env:latest` but it's highly recommended that you avoid using "latest" and set your own tag/version using the `--tag` argument.
 
 ```yaml
-ansible-builder build --container-runtime=docker --tag ansible-execution-env:1.0
+ansible-builder build -v 3 --container-runtime=docker --tag ansible-execution-env:1.0
 ```
 
 Docker now has the `ansible-execution-env` image created with tag `1.0`:
@@ -102,4 +107,12 @@ docker scan --login
 
 # Scan the image
 docker scan ansible-execution-env:1.0
+```
+
+## Tips and Tricks
+
+Get the version of ansible within an image
+
+```yaml
+podman run --rm registry.redhat.io/ansible-automation-platform-21/ee-supported-rhel8 ansible --version
 ```

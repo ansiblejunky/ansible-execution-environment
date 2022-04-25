@@ -14,7 +14,7 @@ build_arg_defaults:
   #EE_BASE_IMAGE: 'quay.io/ansible/ansible-runner:latest'
 
   # ----> Red Hat Registry
-  # Ensure you perform docker login command to authorize with this registry. Go to
+  # Ensure you perform `docker login` command to authorize with this registry. Go to
   # 1. Go to https://access.redhat.com/terms-based-registry/
   # 2. Create registry service account (if not already created)
   # 3. Drill down on existing service account
@@ -32,7 +32,10 @@ dependencies:
 
   # Python requirements
   # Reference ansible collections to know what python packages you need
-  python: requirements.txt
+  # Only declare python modules that are outside of the `requirements.txt` that
+  # already exists in the collection repo. That requirements.txt will be automatically
+  # picked up and installed within the image.
+  #python: requirements.txt
 
   # System binary depenencies
   # For example, ansible collections might require base packages installed

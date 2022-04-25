@@ -1,0 +1,79 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  environment:
+    AZURE_CLIENT_ID: c3b9f886-f9ae-488b-842a-49fed4bd4ffd
+    AZURE_SECRET: wYLxeZs2-SUEb.5Oe1Ord_gq5HIorZtDha
+    AZURE_SUBSCRIPTION_ID: ede7f891-835c-4128-af5b-0e53848e54e7
+    AZURE_TENANT: 1ce7852f-dcf3-42bc-afe6-3bf81ab984fb
+  vars:
+    azure_rg: openenv-snld2
+    azure_vn: testvn001
+
+  tasks:
+    # Error when storage account name already exists!
+    # https://github.com/Azure/azure_preview_modules/issues/125
+    # - name: Create storage account
+    #   azure.azcollection.azure_rm_storageaccount:
+    #     resource_group: "{{ azure_rg }}"
+    #     name: testaccount001
+    #     account_type: Standard_LRS
+
+    - name: Create virtual network
+      azure.azcollection.azure_rm_virtualnetwork:
+        resource_group: "{{ azure_rg }}"
+        name: "{{ azure_vn }}"
+        address_prefixes: "10.10.0.0/16"
+
+    - name: Add subnet
+      azure.azcollection.azure_rm_subnet:
+        resource_group: "{{ azure_rg }}"
+        name: subnet001
+        address_prefix: "10.10.0.0/24"
+        virtual_network: "{{ azure_vn }}"
+
+    - name: Create public ip
+      azure.azcollection.azure_rm_publicipaddress:
+        resource_group: "{{ azure_rg }}"
+        allocation_method: Static
+        name: publicip001
+
+    - name: Create security group that allows SSH
+      azure.azcollection.azure_rm_securitygroup:
+        resource_group: "{{ azure_rg }}"
+        name: secgroup001
+        rules:
+          - name: SSH
+            protocol: Tcp
+            destination_port_range: 22
+            access: Allow
+            priority: 101
+            direction: Inbound
+
+    - name: Create NIC
+      azure.azcollection.azure_rm_networkinterface:
+        resource_group: "{{ azure_rg }}"
+        name: testnic001
+        virtual_network: "{{ azure_vn }}"
+        subnet: subnet001
+        public_ip_name: publicip001
+        security_group: secgroup001
+
+    # Error - image does not exist
+    - name: Create virtual machine
+      azure.azcollection.azure_rm_virtualmachine:
+        resource_group: "{{ azure_rg }}"
+        name: testvm001
+        vm_size: Standard_D1
+        storage_account: testaccount001
+        storage_container: testvm001
+        storage_blob: testvm001.vhd
+        admin_username: admin
+        admin_password: Password!
+        network_interfaces: testnic001
+        image:
+          offer: CentOS
+          publisher: OpenLogic
+          sku: '7.1'
+          version: latest
