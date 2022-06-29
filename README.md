@@ -2,7 +2,7 @@
 
 Basic information to help you get familiar with Ansible Execution Environments and the latest Ansible Automation Platform.
 
-General information on [execution environments](https://docs.ansible.com/automation-controller/latest/html/userguide/ee_reference.html).
+General information on [Ansible Controller](https://docs.ansible.com/automation-controller/latest/html/userguide/index.html) and the related [execution environments](https://docs.ansible.com/automation-controller/latest/html/userguide/ee_reference.html).
 
 ## Prerequisites
 
@@ -11,16 +11,22 @@ General information on [execution environments](https://docs.ansible.com/automat
 - [https://stackoverflow.com/a/51660942](What are image layers?)
 - [https://docs.docker.com/develop/develop-images/dockerfile_best-practices/](Best Practices for Writing Dockerfiles)
 
+### Execution Environments
+
+- [What are Red Hat Ansible Automation Platform automation execution environments?](https://www.redhat.com/en/technologies/management/ansible/automation-execution-environments)
+- [Automation Controller - Execution Environments](https://docs.ansible.com/automation-controller/latest/html/userguide/execution_environments.html)
+
 ### Ansible Builder
 
-- https://www.ansible.com/blog/introduction-to-ansible-builder
-- https://ansible-builder.readthedocs.io/en/latest/index.html
-- https://github.com/ansible/ansible-builder
+- [Introduction to Ansible Builder](https://www.ansible.com/blog/introduction-to-ansible-builder)
+- [Ansible Builder - Guide](https://access.redhat.com/documentation/en-us/red_hat_ansible_automation_platform/2.1/html/ansible_builder_guide/assembly-using-builder)
+- [Ansible Builder - Read The Docs](https://ansible-builder.readthedocs.io/en/latest/index.html)
+- [Ansible Builder - Source Code](https://github.com/ansible/ansible-builder)
 
 ### Ansible Navigator
 
-- https://github.com/ansible/ansible-navigator/
-- https://github.com/ansible/ansible-navigator/blob/main/docs/settings.rst
+- [Ansible Navigator - Source Code](https://github.com/ansible/ansible-navigator/)
+- [Ansible Navigator - Settings](https://github.com/ansible/ansible-navigator/blob/main/docs/settings.rst)
 
 ## Installation
 
