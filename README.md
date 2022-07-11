@@ -8,8 +8,8 @@ General information on [Ansible Controller](https://docs.ansible.com/automation-
 
 ### Images and Containers
 
-- [https://stackoverflow.com/a/51660942](What are image layers?)
-- [https://docs.docker.com/develop/develop-images/dockerfile_best-practices/](Best Practices for Writing Dockerfiles)
+- [What are image layers?](https://stackoverflow.com/a/51660942)
+- [Best Practices for Writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/)
 
 ### Execution Environments
 
