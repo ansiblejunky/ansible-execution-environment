@@ -1,5 +1,28 @@
 ---
 collections:
+  # Platforms
   - name: azure.azcollection
     version: 1.12.0
     source: https://galaxy.ansible.com
+    
+  # Network Automation
+  - name: infoblox.nios_modules
+    version: v1.3.0
+    source: https://galaxy.ansible.com
+  - name: ansible.posix
+    version: 1.4.0
+  
+  # Ansible Automation Platform
+  - name: ansible.controller
+    version: 4.1.1
+    source: https://cloud.redhat.com/api/automation-hub/
+  
+  # General Modules
+  - name: community.general
+    version: 4.7.0
+    source: https://galaxy.ansible.com
+    
+  # Kubernetes
+  - name: kubernetes.core
+    version: 2.3.0
+    source: https://cloud.redhat.com/api/automation-hub/
