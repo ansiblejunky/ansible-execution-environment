@@ -1,2 +1,3 @@
+dnf [platform:rpm]
 git [platform:rpm]
-git [platform:dpkg]
+jq [platform:rpm]

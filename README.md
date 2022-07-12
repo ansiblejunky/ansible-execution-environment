@@ -32,7 +32,7 @@ General information on [Ansible Controller](https://docs.ansible.com/automation-
 
 Run the following steps using `pyenv`.
 
-```shell
+```bash
 pyenv install 3.8.9
 pyenv activate 3.8.9 ansible-ee
 
@@ -75,15 +75,15 @@ additional_build_steps:
 Now let's run `ansible-builder` to create the image based on our template. Note that Podman is used by default to build images but we will use Docker instead. Also the default name and tag for the container image being built is `ansible-execution-env:latest` but it's highly recommended that you avoid using "latest" and set your own tag/version using the `--tag` argument.
 
 ```yaml
-ansible-builder build -v 3 --container-runtime=docker --tag ansible-execution-env:1.0
+ansible-builder build --verbosity 3 --container-runtime=docker --tag ansible-ee:1.0
 ```
 
-Docker now has the `ansible-execution-env` image created with tag `1.0`:
+Docker now has the `ansible-ee` image created with tag `1.0`:
 
 ```yaml
 $ docker image list
 REPOSITORY                            TAG             IMAGE ID       CREATED         SIZE
-ansible-execution-env                 1.0             9fec21fe39be   2 hours ago     987MB
+ansible-ee                 1.0             9fec21fe39be   2 hours ago     987MB
 ```
 
 ## Run the image
@@ -93,7 +93,7 @@ We use `ansible-navigator` to start a container by pulling the image we built an
 So let's try to run our playbook using `ansible-navigator`. Set the default container runtime using the `--container-engine docker` argument. Point the tool to the execution environment image name by using the `--execution-environment-image` argument along with the image name and tag. This is where it's important to not use "latest" as the tag so we ensure Docker knows where to grab the image.
 
 ```yaml
-ansible-navigator run playbook.yml --container-engine docker --execution-environment-image ansible-execution-env:1.0
+ansible-navigator run playbook.yml --container-engine docker --execution-environment-image ansible-ee:1.0
 ```
 
 The tool launches the container, runs the playbook and shows an interactive screen where you can watch the playbook run through.
@@ -115,6 +115,23 @@ docker scan --login
 docker scan ansible-execution-env:1.0
 ```
 
+## Push the image to Quay
+
+Once you have built the image locally, tested it, and scanned it for security issues - you are now ready to push the image to a registry of choice. Here we show how to push to Quay.
+
+First, navigate to `quay.io` and under your profile create a new repository.
+
+Then, use the following commands to tag your image and push it to Quay.
+
+```bash
+# Tag the image properly to prepare for Quay
+docker tag azure-ee:1.0 quay.io/jwadleig/azure-ee:1.0
+# Login to Quay
+docker login quay.io
+# Push image to Quay
+docker push quay.io/jwadleig/azure-ee:1.0
+```
+
 ## Tips and Tricks
 
 Get the version of ansible within an image
@@ -122,3 +139,4 @@ Get the version of ansible within an image
 ```yaml
 podman run --rm registry.redhat.io/ansible-automation-platform-21/ee-supported-rhel8 ansible --version
 ```
+
