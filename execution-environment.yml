@@ -52,11 +52,11 @@ additional_build_steps:
   append:
     - RUN echo This is a post-install command!
     # Install azure-cli command line tool
-    # - RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc \
-    #   && echo "[azure-cli]" > /etc/yum.repos.d/azure-cli.repo \
-    #   && echo "name=Azure CLI" >> /etc/yum.repos.d/azure-cli.repo \
-    #   && echo "baseurl=https://packages.microsoft.com/yumrepos/azure-cli" >> /etc/yum.repos.d/azure-cli.repo \
-    #   && echo "enabled=1" >> /etc/yum.repos.d/azure-cli.repo \
-    #   && echo "gpgcheck=1" >> /etc/yum.repos.d/azure-cli.repo \
-    #   && echo "gpgkey=https://packages.microsoft.com/keys/microsoft.asc" >> /etc/yum.repos.d/azure-cli.repo \
-    #   && dnf -y install azure-cli
+    - RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc \
+      && echo "[azure-cli]" > /etc/yum.repos.d/azure-cli.repo \
+      && echo "name=Azure CLI" >> /etc/yum.repos.d/azure-cli.repo \
+      && echo "baseurl=https://packages.microsoft.com/yumrepos/azure-cli" >> /etc/yum.repos.d/azure-cli.repo \
+      && echo "enabled=1" >> /etc/yum.repos.d/azure-cli.repo \
+      && echo "gpgcheck=1" >> /etc/yum.repos.d/azure-cli.repo \
+      && echo "gpgkey=https://packages.microsoft.com/keys/microsoft.asc" >> /etc/yum.repos.d/azure-cli.repo \
+      && dnf -y install azure-cli
