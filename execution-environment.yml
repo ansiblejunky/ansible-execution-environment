@@ -27,8 +27,12 @@ build_arg_defaults:
   # Find existing container images using https://catalog.redhat.com/software/containers/search
   # `minimal` base images contain only ansible-core
   # `supported` base images contain ansible-core and automation content collections supported by Red Hat
-  EE_BASE_IMAGE: 'registry.redhat.io/ansible-automation-platform-21/ee-minimal-rhel8:latest'
+  EE_BASE_IMAGE: 'registry.redhat.io/ansible-automation-platform-22/ee-minimal-rhel8:latest'
 
+  # Base Builder Image
+  # ansible-builder requires a base builder image in addition to the base image stated above
+  EE_BUILDER_IMAGE: 'registry.redhat.io/ansible-automation-platform-22/ansible-builder-rhel8:latest'
+  
 ansible_config: 'ansible.cfg'
 
 dependencies:
