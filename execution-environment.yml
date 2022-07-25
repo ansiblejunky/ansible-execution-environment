@@ -1,5 +1,8 @@
 ---
 version: 1
+# General documentation
+# https://docs.ansible.com/automation-controller/latest/html/userguide/ee_reference.html#execution-environment-setup-reference
+# https://access.redhat.com/documentation/en-us/red_hat_ansible_automation_platform/2.1/html-single/ansible_builder_guide/index
 
 build_arg_defaults:
   # Ignore certifications (verify_ssl=false)
