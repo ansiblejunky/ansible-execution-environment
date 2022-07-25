@@ -2,6 +2,9 @@
 version: 1
 
 build_arg_defaults:
+  # Ignore certifications (verify_ssl=false)
+  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: -c
+  
   # ----> Quay Registry
   # Ensure you authorize docker with this registry. 
   # 1. Go to https://quay.io/ and login or create an account
