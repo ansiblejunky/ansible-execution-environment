@@ -6,8 +6,11 @@ version: 1
 
 build_arg_defaults:
   # Ignore certifications (verify_ssl=false)
-  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: -c
+  # ------------------------------> 
+  #ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: -c
   
+  # Execution Environment Base Image
+  # ------------------------------> 
   # ----> Quay Registry
   # Ensure you authorize docker with this registry. 
   # 1. Go to https://quay.io/ and login or create an account
@@ -30,11 +33,12 @@ build_arg_defaults:
   # Find existing container images using https://catalog.redhat.com/software/containers/search
   # `minimal` base images contain only ansible-core
   # `supported` base images contain ansible-core and automation content collections supported by Red Hat
-  EE_BASE_IMAGE: 'registry.redhat.io/ansible-automation-platform-22/ee-minimal-rhel8:latest'
+  EE_BASE_IMAGE: 'registry.redhat.io/ansible-automation-platform-21/ee-minimal-rhel8:latest'
 
   # Base Builder Image
+  # ------------------------------> 
   # ansible-builder requires a base builder image in addition to the base image stated above
-  EE_BUILDER_IMAGE: 'registry.redhat.io/ansible-automation-platform-22/ansible-builder-rhel8:latest'
+  #EE_BUILDER_IMAGE: 'registry.redhat.io/ansible-automation-platform-21/ansible-builder-rhel8:latest'
   
 ansible_config: 'ansible.cfg'
 
@@ -59,14 +63,9 @@ additional_build_steps:
     RUN whoami
     RUN cat /etc/os-release
     RUN pip3 install --upgrade pip setuptools
-  append:
-    - RUN echo This is a post-install command!
-    # Install azure-cli command line tool
-    - RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc \
-      && echo "[azure-cli]" > /etc/yum.repos.d/azure-cli.repo \
-      && echo "name=Azure CLI" >> /etc/yum.repos.d/azure-cli.repo \
-      && echo "baseurl=https://packages.microsoft.com/yumrepos/azure-cli" >> /etc/yum.repos.d/azure-cli.repo \
-      && echo "enabled=1" >> /etc/yum.repos.d/azure-cli.repo \
-      && echo "gpgcheck=1" >> /etc/yum.repos.d/azure-cli.repo \
-      && echo "gpgkey=https://packages.microsoft.com/keys/microsoft.asc" >> /etc/yum.repos.d/azure-cli.repo \
-      && dnf -y install azure-cli
+  append: |
+    RUN echo This is a post-install command!
+    # Install azure-cli command line tool https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf
+    RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc
+    RUN dnf -y install -y https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm
+    RUN dnf -y install azure-cli
