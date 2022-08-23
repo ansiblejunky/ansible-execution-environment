@@ -9,3 +9,17 @@
 
 # Other Dependencies
 # <list them here>
+
+# Windows connectivity requirements - https://docs.ansible.com/ansible/latest/user_guide/windows_winrm.html#what-is-winrm
+pywinrm\>=0.3.0
+# Infoblox requirements - https://docs.ansible.com/ansible/latest/scenario_guides/guide_infoblox.html#prerequisites
+infoblox-client
+# Mongo requirements
+pymongo
+# Ansible `replace` module requirements - https://docs.ansible.com/ansible/latest/collections/ansible/builtin/replace_module.html
+selinux
+# VMware vSphere requirements - https://github.com/vmware/pyvmomi
+pyVmomi
+# VMware vCenter dynamic inventory requirements - https://github.com/vmware/vsphere-automation-sdk-python
+suds-jurko
+git+https://github.com/vmware/vsphere-automation-sdk-python.git

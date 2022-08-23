@@ -11,35 +11,13 @@ build_arg_defaults:
   
   # Execution Environment Base Image
   # ------------------------------> 
-  # ----> Quay Registry
-  # Ensure you authorize docker with this registry. 
-  # 1. Go to https://quay.io/ and login or create an account
-  # 2. Navigate to top-right for Account Settings
-  # 3. Select the tool icon on the left
-  # 4. Set the Docker CLI Password to enable encrypted passwords
-  # 5. Generate the encryped password (re-enter the password)
-  # 6. Select the option "Docker Login" to get the CLI command
-  # 5. Run the CLI login command to have docker authorized to pull from quay registry
-  #EE_BASE_IMAGE: 'quay.io/ansible/ansible-runner:latest'
-
-  # ----> Red Hat Registry
-  # Ensure you perform `docker login` command to authorize with this registry. Go to
-  # 1. Go to https://access.redhat.com/terms-based-registry/
-  # 2. Create registry service account (if not already created)
-  # 3. Drill down on existing service account
-  # 4. Select "Docker Login" tab and copy login command and run it locally to authenticate
-  # Troubleshooting Authentication Issues with registry.redhat.io
-  # https://access.redhat.com/articles/3560571
-  # Find existing container images using https://catalog.redhat.com/software/containers/search
-  # `minimal` base images contain only ansible-core
-  # `supported` base images contain ansible-core and automation content collections supported by Red Hat
   EE_BASE_IMAGE: 'registry.redhat.io/ansible-automation-platform-21/ee-minimal-rhel8:latest'
 
   # Base Builder Image
   # ------------------------------> 
   # ansible-builder requires a base builder image in addition to the base image stated above
   #EE_BUILDER_IMAGE: 'registry.redhat.io/ansible-automation-platform-21/ansible-builder-rhel8:latest'
-  
+    
 ansible_config: 'ansible.cfg'
 
 dependencies:
@@ -54,15 +32,17 @@ dependencies:
   # picked up and installed within the image.
   python: requirements-python.txt
 
-  # System binary depenencies
-  # For example, ansible collections might require base packages installed
+  # System binary depenencies - system packages you want to include into the image
+  # Packages are pulled from ubi repositories https://access.redhat.com/articles/4238681
+  # Examples are zip, dnf, and other tools
   system: bindep.txt
 
 additional_build_steps:
   prepend: |
     RUN whoami
     RUN cat /etc/os-release
-    RUN pip3 install --upgrade pip setuptools
+    # Windows Authentication - Kerberos
+    #COPY krb5.conf /etc/krb5.conf
   append: |
     RUN echo This is a post-install command!
     # Install azure-cli command line tool https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf

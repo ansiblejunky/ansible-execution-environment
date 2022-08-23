@@ -1,0 +1,23 @@
+collections:
+- name: ansible-controller-4.1.1.tar.gz
+  version: 4.1.1
+- name: community-general-4.7.0.tar.gz
+  version: 4.7.0
+- name: paloaltonetworks-panos-3.0.0.tar.gz
+  version: 3.0.0
+- name: ansible-windows-1.10.0.tar.gz
+  version: 1.10.0
+- name: infoblox-nios_modules-1.3.0.tar.gz
+  version: 1.3.0
+- name: azure-azcollection-1.12.0.tar.gz
+  version: 1.12.0
+- name: f5networks-f5_modules-1.16.0.tar.gz
+  version: 1.16.0
+- name: kubernetes-core-2.3.2.tar.gz
+  version: 2.3.2
+- name: ansible-posix-1.4.0.tar.gz
+  version: 1.4.0
+- name: ansible-netcommon-3.1.0.tar.gz
+  version: 3.1.0
+- name: ansible-utils-2.6.1.tar.gz
+  version: 2.6.1

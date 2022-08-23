@@ -1,3 +1,6 @@
 dnf [platform:rpm]
 git [platform:rpm]
 jq [platform:rpm]
+# Windows Authentication - Kerberos
+# krb5-libs [platform:rpm]
+# krb5-workstation [platform:rpm]
