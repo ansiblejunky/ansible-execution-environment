@@ -64,9 +64,14 @@ Let's first define our execution environment using yaml. [Here is an example fil
 Now let's run `ansible-builder` to create the image based on our template. Note that Podman is used by default to build images but we will use Docker instead. Also the default name and tag for the container image being built is `ansible-execution-env:latest` but it's highly recommended that you avoid using "latest" and set your own tag/version using the `--tag` argument.
 
 ```yaml
-# Ensure tokens allow downloading collections from various defined servers
+# Set tokens using environment variables
 export ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_TOKEN="token_value"
+export ANSIBLE_GALAXY_SERVER_COMMUNITY_TOKEN="token_value"
 
+# Generate ansible.cfg using template
+envsubst < ansible.cfg.template > ansible.cfg
+
+# Test tokens
 mkdir collections
 ansible-galaxy collection download -r requirements-galaxy.yml -p collections/
 rm -rf collections
@@ -245,4 +250,3 @@ pip3 install ansible
 - [Ansible Navigator - Source Code](https://github.com/ansible/ansible-navigator/)
 - [Ansible Navigator - Settings](https://github.com/ansible/ansible-navigator/blob/main/docs/settings.rst)
 
-docker run -d -it --name min registry.redhat.io/ansible-automation-platform-21/ee-minimal-rhel8:latest /bin/bash
