@@ -1,5 +1,6 @@
 ---
 # Navigate to https://console.redhat.com/ansible/automation-hub for certified content
+# Complete list of certified collections: https://access.redhat.com/articles/3642632
 
 collections:
   # Ansible Automation Platform
@@ -15,11 +16,12 @@ collections:
     version: 2.1.5
   - name: kubernetes.core
     version: 2.3.2
-    #source: https://cloud.redhat.com/api/automation-hub/
   - name: redhat.openshift
-    version: 2.0.1
-  - name: redhat.rhv
-    version: 1.4.4
+    version: 2.2.0
+
+  # error: No package matches 'qemu-img'
+  #- name: redhat.rhv
+  #  version: 1.4.4
 
   # Network Automation
   - name: infoblox.nios_modules

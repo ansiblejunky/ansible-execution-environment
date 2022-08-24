@@ -142,15 +142,13 @@ Leverage the following utils to help migrate pre-existing python virtual environ
 
 ## Tips and Tricks
 
-Default execution environment that ansible-navigator uses when not specified:
-`quay.io/ansible/creator-ee`
-https://github.com/ansible/creator-ee
+Default execution environment that ansible-navigator uses when not specified: [quay.io/ansible/creator-ee](https://github.com/ansible/creator-ee)
 
 Examine execution environment using ansible-navigator:
-`ansible-navigator --eei registry.redhat.io/ansible-automation-platform-21/ee-supported-rhel8:latest`
+`ansible-navigator --eei <image-name>`
 
 Extract list of collections from existing execution environment:
-`ansible-navigator --eei registry.redhat.io/ansible-automation-platform-21/ee-supported-rhel8:latest collections --mode stdout`
+`ansible-navigator --eei <image-name> collections --mode stdout`
 
 Use Credentials within `ansible-navigator` tool:
 
@@ -162,16 +160,16 @@ How to run `--syntax-check` using `ansible-navigator`:
 
 `ansible-navigator run <playbook> --syntax-check --mode stdout`
 
-Get the version of ansible within an image:
+Run adhoc commands inside image:
 
 ```yaml
-podman run --rm registry.redhat.io/ansible-automation-platform-21/ee-supported-rhel8 ansible --version
+podman run --rm <image-name> <command>
 ```
 
-Change the yum repositories within the base and builder images:
+Change the yum repositories and pip repository within the base and builder images:
 
 ```shell
-# Create repository file locally
+# Create yum repository file locally
 cat > ubi.repo <<EOF
 [rhel-8-for-x86_64-appstream-rpms]
 baseurl = http://x.x.x.x/rpms/rhel-8-for-x86_64-appstream-rpms
@@ -181,69 +179,69 @@ baseurl = http://x.x.x.x/rpms/rhel-8-for-x86_64-baseos-rpms
 gpgkey = file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
 EOF
 
-# Then run the containers
-podman run -d -it --name custom-ee-supported registry.redhat.io/ansible-automation-platform-21/ee-supported-rhel8:latest /bin/bash
-podman run -d -it --name custom-builder registry.redhat.io/ansible-automation-platform-21/ansible-builder-rhel8:latest /bin/bash
-
-
-# Then copy the repo into the containers
-podman cp ubi.repo custom-ee-supported:/etc/yum.repos.d/
-podman cp ubi.repo custom-builder:/etc/yum.repos.d/
-
-#Then stop the containers
-
-#Then commit the containers
-
-#Then push the containers
-```
-
-Change the pip repository used within the base/builder images. Run these commands inside the image to change the configuration and rebuild the image.
-
-```shell
-# (optional) Install vi to edit files
-microdnf install vi
-# Test pip3 to ensure it fails
-pip3 install ansible
-# Set the global pip configuration https://pip.pypa.io/en/stable/topics/configuration/
-cd /etc
+# Create pip configuration file locally
 cat > pip.conf <<EOF
 [global]
 index-url = https://artifactory.acme.com/artifactory/api/pypi/pypi/simple
 trusted-host = artifactory.acme.com
 EOF
-# Re-run the pip3 command to ensure it works now
-pip3 install ansible
+
+# Then run the containers
+podman run -d -it --name custom-ee-supported registry.redhat.io/ansible-automation-platform-22/ee-supported-rhel8:latest /bin/bash
+podman run -d -it --name custom-ee-builder registry.redhat.io/ansible-automation-platform-22/ansible-builder-rhel8:latest /bin/bash
+
+# Then copy the yum repo file into the containers
+podman cp ubi.repo custom-ee-supported:/etc/yum.repos.d/
+podman cp ubi.repo custom-ee-builder:/etc/yum.repos.d/
+
+# Then copy the pip config file to set the global pip configuration https://pip.pypa.io/en/stable/topics/configuration/
+podman cp pip.conf custom-ee-supported:/etc/
+podman cp pip.conf custom-ee-builder:/etc/
+
+#Then stop the containers
+podman stop -a
+
+#Then commit the containers
+podman commit --message "Replaced yum repos" --format docker --author "ACME Company" <containerID> <image>
+
+#Then push the containers
+podman push <image-name> quay.io/username/myimage
 ```
 
 ## References
 
-## Best Practices
+Warnings:
+
+- [microdnf showing ibrhsm-WARNING ** and Found 0 entitlement certificates](https://access.redhat.com/solutions/4643601)
+
+Best Practices:
 
 - [Best Practices for successful DevSecOps](https://developers.redhat.com/articles/2022/06/15/best-practices-successful-devsecops)
 
-### Images and Containers
+Images and Containers:
 
 - [What are image layers?](https://stackoverflow.com/a/51660942)
 - [Best Practices for Writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/)
 
-### Execution Environments
+Execution Environments:
 
 - [What are Red Hat Ansible Automation Platform automation execution environments?](https://www.redhat.com/en/technologies/management/ansible/automation-execution-environments)
 - [Automation Controller - Execution Environments](https://docs.ansible.com/automation-controller/latest/html/userguide/execution_environments.html)
+- [Execution Environment Setup Reference](https://docs.ansible.com/automation-controller/latest/html/userguide/ee_reference.html#execution-environment-setup-reference)
 
-### Podman
+Podman:
 
 - [How to set debug logging from podman?](https://access.redhat.com/solutions/3947441)
 - Debugging: `podman pull --log-level debug <image>`
 
-### Ansible Builder
+Ansible Builder:
 
 - [Introduction to Ansible Builder](https://www.ansible.com/blog/introduction-to-ansible-builder)
 - [Ansible Builder - Guide](https://access.redhat.com/documentation/en-us/red_hat_ansible_automation_platform/2.1/html/ansible_builder_guide/assembly-using-builder)
 - [Ansible Builder - Read The Docs](https://ansible-builder.readthedocs.io/en/latest/index.html)
 - [Ansible Builder - Source Code](https://github.com/ansible/ansible-builder)
 
-### Ansible Navigator
+Ansible Navigator:
 
 - [Ansible Navigator Creator Guide](https://access.redhat.com/documentation/en-us/red_hat_ansible_automation_platform/2.0-ea/html-single/ansible_navigator_creator_guide/index)
 - [Introduction to Ansible Runner](https://ansible-runner.readthedocs.io/en/stable/intro/)
