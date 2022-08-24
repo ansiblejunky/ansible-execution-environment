@@ -9,6 +9,8 @@
 
 # Other Dependencies
 # <list them here>
+pip
+setuptools
 
 # Windows connectivity requirements - https://docs.ansible.com/ansible/latest/user_guide/windows_winrm.html#what-is-winrm
 pywinrm\>=0.3.0
