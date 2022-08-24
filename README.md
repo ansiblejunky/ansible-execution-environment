@@ -73,7 +73,7 @@ envsubst < ansible-builder/ansible.cfg.template > ansible-builder/ansible.cfg
 
 # Test tokens
 mkdir collections
-ansible-galaxy collection download -r requirements-galaxy.yml -p collections/
+ansible-galaxy collection download -r ansible-builder/requirements.yml -p collections/
 rm -rf collections
 
 # Build the image
