@@ -15,24 +15,24 @@ build_arg_defaults:
   # ansible-builder requires a base builder image in addition to the base image stated above
   #EE_BUILDER_IMAGE: 'registry.redhat.io/ansible-automation-platform-22/ansible-builder-rhel8:latest'
 
-ansible_config: 'ansible.cfg'
+ansible_config: ansible-builder/ansible.cfg
 
 dependencies:
   # Ansible dependencies
   # Pull down ansible roles and collections required by your playbooks
-  galaxy: requirements-galaxy.yml
+  galaxy: ansible-builder/requirements.yml
 
   # Python requirements
   # Reference ansible collections to know what python packages you need
   # Only declare python modules that are outside of the `requirements.txt` that
   # already exists in the collection repo. That requirements.txt will be automatically
   # picked up and installed within the image.
-  python: requirements-python.txt
+  python: ansible-builder/requirements.txt
 
   # System binary depenencies - system packages you want to include into the image
   # Packages are pulled from ubi repositories https://access.redhat.com/articles/4238681
   # Examples are zip, dnf, and other tools
-  system: bindep.txt
+  system: ansible-builder/bindep.txt
 
 additional_build_steps:
   prepend: |

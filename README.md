@@ -69,7 +69,7 @@ export ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_TOKEN="token_value"
 export ANSIBLE_GALAXY_SERVER_COMMUNITY_TOKEN="token_value"
 
 # Generate ansible.cfg using template
-envsubst < ansible.cfg.template > ansible.cfg
+envsubst < ansible-builder/ansible.cfg.template > ansible-builder/ansible.cfg
 
 # Test tokens
 mkdir collections
