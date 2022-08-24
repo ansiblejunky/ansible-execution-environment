@@ -18,8 +18,7 @@ collections:
     version: 2.3.2
   - name: redhat.openshift
     version: 2.2.0
-
-  # error: No package matches 'qemu-img'
+  # Run ansible-builder on subscribed RHEL machine to get required `qemu-img` package
   #- name: redhat.rhv
   #  version: 1.4.4
 
