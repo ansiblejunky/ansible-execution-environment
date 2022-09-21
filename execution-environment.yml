@@ -47,9 +47,15 @@ additional_build_steps:
     # ANSIBLE-BUILDER APPEND - START
 
     RUN echo This is a post-install command!
+
     # Install azure-cli command line tool https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf
     RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc
     RUN dnf -y install -y https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm
     RUN dnf -y install azure-cli
+
+    # Install packer command line tool to build server images (installs into /usr/bin/packer)
+    # Note that `packer` binary already exists in the UBI image but this comes from /usr/sbin/packer and is unrelated!
+    RUN curl https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo --output /etc/yum.repos.d/hashicorp.repo
+    RUN dnf -y install packer
 
     # ANSIBLE-BUILDER APPEND - END

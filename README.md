@@ -138,8 +138,8 @@ Once you have built the image locally, tested it, and scanned it for security is
 ```bash
 # Example using quay.io
 docker login quay.io
-docker tag azure-ee:5.0 quay.io/jwadleig/azure-ee:5.0
-docker push quay.io/jwadleig/azure-ee:5.0
+docker tag ansible-ee:5.0 quay.io/jwadleig/ansible-ee:5.0
+docker push quay.io/jwadleig/ansible-ee:5.0
 
 # Example using onprem Automation Hub
 podman login hub.example.com:443
@@ -176,6 +176,12 @@ Use Credentials within `ansible-navigator` tool:
 How to run `--syntax-check` using `ansible-navigator`:
 
 `ansible-navigator run <playbook> --syntax-check --mode stdout`
+
+Start shell session inside container image:
+
+```yaml
+docker run -it registry.redhat.io/ansible-automation-platform-22/ee-supported-rhel8:latest /bin/bash
+```
 
 Run adhoc commands inside image:
 
