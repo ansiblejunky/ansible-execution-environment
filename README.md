@@ -4,10 +4,15 @@ Basic information to help you get familiar with Ansible Execution Environments a
 
 General information on [Ansible Controller](https://docs.ansible.com/automation-controller/latest/html/userguide/index.html) and the related [execution environments](https://docs.ansible.com/automation-controller/latest/html/userguide/ee_reference.html).
 
-## Installation
+## Requirements
 
-- Install container tool of choice (docker or podman)
-- Install Ansible using python virtual environment
+- Install container tool of choice (docker / podman)
+- skopio [https://github.com/containers/skopeo/blob/main/README.md]
+- ansible-navigator (includes ansible-builder, etc)
+- yaml-lint
+- jq
+
+Example installing Ansible using python virtual environment on Mac OS:
 
 ```bash
 # Install docker desktop
@@ -129,6 +134,8 @@ We can test that everything is working by running an Ansible Playbook in the ima
 
 ```yaml
 ansible-navigator run playbook.yml --container-engine docker --execution-environment-image ansible-ee:5.0
+
+ansible-navigator config --container-engine docker --execution-environment-image ansible-ee:5.0
 ```
 
 ## Push the Image
@@ -180,7 +187,7 @@ How to run `--syntax-check` using `ansible-navigator`:
 Start shell session inside container image:
 
 ```yaml
-docker run -it registry.redhat.io/ansible-automation-platform-22/ee-supported-rhel8:latest /bin/bash
+docker run -it registry.redhat.io/ansible-automation-platform-22/ee-minimal-rhel8:latest /bin/bash
 ```
 
 Run adhoc commands inside image:

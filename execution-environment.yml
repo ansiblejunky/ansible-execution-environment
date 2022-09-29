@@ -3,35 +3,23 @@ version: 1
 
 build_arg_defaults:
   # Ignore certifications (verify_ssl=false)
-  # ------------------------------> 
+  # ------------------------------>
   ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: -c
-  
+
   # Execution Environment Base Image
-  # ------------------------------> 
+  # ------------------------------>
   EE_BASE_IMAGE: 'registry.redhat.io/ansible-automation-platform-22/ee-minimal-rhel8:latest'
 
   # Base Builder Image
-  # ------------------------------> 
+  # ------------------------------>
   # ansible-builder requires a base builder image in addition to the base image stated above
   #EE_BUILDER_IMAGE: 'registry.redhat.io/ansible-automation-platform-22/ansible-builder-rhel8:latest'
 
 ansible_config: ansible.cfg
 
 dependencies:
-  # Ansible dependencies
-  # Pull down ansible roles and collections required by your playbooks
   galaxy: requirements.yml
-
-  # Python requirements
-  # Reference ansible collections to know what python packages you need
-  # Only declare python modules that are outside of the `requirements.txt` that
-  # already exists in the collection repo. That requirements.txt will be automatically
-  # picked up and installed within the image.
   python: requirements.txt
-
-  # System binary depenencies - system packages you want to include into the image
-  # Packages are pulled from ubi repositories https://access.redhat.com/articles/4238681
-  # Examples are zip, dnf, and other tools
   system: bindep.txt
 
 additional_build_steps:
@@ -39,6 +27,7 @@ additional_build_steps:
     # ANSIBLE-BUILDER PREPEND - START
     RUN whoami
     RUN cat /etc/os-release
+
     # Windows Authentication - Kerberos
     #COPY krb5.conf /etc/krb5.conf
 
@@ -46,16 +35,25 @@ additional_build_steps:
   append: |
     # ANSIBLE-BUILDER APPEND - START
 
-    RUN echo This is a post-install command!
+    # Verify installed packages have compatible dependencies
+    # Logged issue https://github.com/ansible/ansible-builder/issues/416
+    RUN pip3 check
 
     # Install azure-cli command line tool https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf
-    RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc
-    RUN dnf -y install -y https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm
-    RUN dnf -y install azure-cli
+    RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc && \
+     dnf -y install -y https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm && \
+     dnf -y install azure-cli
 
     # Install packer command line tool to build server images (installs into /usr/bin/packer)
     # Note that `packer` binary already exists in the UBI image but this comes from /usr/sbin/packer and is unrelated!
-    RUN curl https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo --output /etc/yum.repos.d/hashicorp.repo
-    RUN dnf -y install packer
+    RUN curl https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo --output /etc/yum.repos.d/hashicorp.repo && \
+     dnf -y install packer
+
+    # Clean up
+    RUN dnf update -y \
+      && dnf clean all \
+      && rm -rf /var/cache/{dnf,yum} \
+      && rm -rf /var/lib/dnf/history.* \
+      && rm -rf /var/log/*
 
     # ANSIBLE-BUILDER APPEND - END
