@@ -12,22 +12,20 @@ General information on [Ansible Controller](https://docs.ansible.com/automation-
 - yaml-lint
 - jq
 
-Example installing Ansible using python virtual environment on Mac OS:
+Example using Mac OS:
 
 ```bash
-# Install docker desktop
+# Install docker and docker desktop
 brew install --cask docker
-
-# Install podman https://podman.io/getting-started/installation
+# Install podman https://podman.io/ and podman-desktop https://podman-desktop.io/
 brew install podman
+brew install podman-desktop
 
 # Install pyenv
 brew install pyenv
-
 # Prepare python environment
 pyenv install 3.10.2
 pyenv activate 3.10.2 ansible
-
 # Install ansible-navigator and related tools
 pip install ansible-navigator[ansible-core]
 ```

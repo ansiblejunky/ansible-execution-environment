@@ -6,12 +6,14 @@
 
 collections:
   # Ansible Automation Platform
+  # -------------------------------------------------------------------
   - name: ansible.controller
     version: 4.2.1
   - name: redhat_cop.controller_configuration
     version: 2.1.7
 
   # Platforms
+  # -------------------------------------------------------------------
   - name: amazon.aws
     version: 4.2.0
   - name: azure.azcollection
@@ -29,6 +31,7 @@ collections:
   #  version: 1.4.4
 
   # Server Management
+  # -------------------------------------------------------------------
   - name: community.general
     version: 4.7.0
   - name: community.windows
@@ -39,8 +42,12 @@ collections:
     version: 2.4.2
 
   # Network Automation
+  # -------------------------------------------------------------------
   #- name: infoblox.nios_modules
   #  version: 1.3.0
+  # Netbox network modeling https://galaxy.ansible.com/netbox/netbox
+  - name: netbox.netbox
+    version: 3.8.0
   - name: ansible.posix
     version: 1.4.0
   #- name: f5networks.f5_modules
@@ -64,6 +71,7 @@ collections:
   #  version: 2.0.2
 
   # Security Automation
+  # -------------------------------------------------------------------
   # The Ansible ansible.security collection is a meta collection that install all the following security supported content collections.
   # - ansible.netcommon
   # - ansible.utils
@@ -77,21 +85,25 @@ collections:
   #  version: 1.0.5
 
   # Ansible Cloud Common
+  # -------------------------------------------------------------------
   # It uses the Turbo Module https://github.com/ansible-collections/cloud.common
   # A cache sharing solution to speed up Ansible modules
   #- name: cloud.common
   #  version: 2.0.4
 
   # Inventory Sources
+  # -------------------------------------------------------------------
   #- name: redhat.satellite
   #  version: 2.2.0
   #- name: servicenow.itsm
   #  version: 1.2.0
 
   # Identity Management
+  # -------------------------------------------------------------------
   #- name: redhat.rhel_idm
   #  version: 1.8.2
 
   # Logging Aggregation
+  # -------------------------------------------------------------------
   #- name: splunk.es
   #  version: 1.0.2

@@ -35,3 +35,4 @@ pyOpenSSL==22.0.0
 requests==2.27.1
 azure-mgmt-datalake-nspkg==2.0.0
 setuptools==62.0.0
+portalocker==1.7.1

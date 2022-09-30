@@ -30,7 +30,7 @@ GIT_HASH ?= $(shell git log --format="%h" -n 1)
 CONTAINER_TAG ?= $(GIT_HASH)
 
 .PHONY : header clean lint check build scan test publish list shell
-all: header clean lint build
+all: header clean lint build publish
 
 header:
 	@echo "\n\n***************************** Ansible Automation Platform - Makefile for Execution Environments \n"
@@ -45,6 +45,7 @@ lint: # Lint the repository with yamllint
 	@echo "\n\n***************************** Linting... \n"
 	yamllint .
 
+#TODO: Decide to include scanning of original container image from Red Hat
 #curl -o `basename $IMAGE_NAME`.json https://quay.io/api/v1/repository/$IMAGE_NAME/manifest/$IMAGE_DIGEST/security?vulnerabilities=true
 # Workaround using `--raw` to get digest https://github.com/containers/skopeo/issues/634
 digest := $(shell (skopeo inspect --raw docker://$(BASE_IMAGE) | jq -r .manifests[].digest))
@@ -55,6 +56,7 @@ check: # Check base images for security vulnerabilities
 	
 #TODO: Check `Warning: failed to parse requirements from user, error: Parse error at "'\\>=0.3.0'": Expected string_end` from introspect command
 #		add linting for bindep.txt, requirements.txt and requirements.yml (yamllint)
+#		raise error when "Warning" is shown from introspect command
 build: # Build the execution environment image
 	@echo "\n\n***************************** Building... \n"
 	if [ -a ansible-builder.log ] ; \
@@ -74,7 +76,7 @@ scan: # Scan image for vulnerabilities https://www.redhat.com/sysadmin/using-qua
 inspect: # Inspect built image to show information
 	$(CONTAINER_ENGINE) inspect $(CONTAINER_NAME):$(CONTAINER_TAG)
 
-test: # Run the example playbook in the execution environment
+test: # Run the example playbook using the built container image
 	ansible-navigator run \
 		playbook.yml \
 		--container-engine $(CONTAINER_ENGINE) \
@@ -83,8 +85,10 @@ test: # Run the example playbook in the execution environment
 
 
 #TODO: See about adding info (LABELS) to the released image on Quay.io (packages, ansible-core version, collections, python deps, etc)
-publish:
+publish: # Publish the image with proper tags to container registry
 	$(CONTAINER_ENGINE) login $(REGISTRY_HUB)
+	$(CONTAINER_ENGINE) tag  \
+		$(CONTAINER_NAME):$(CONTAINER_TAG) $(CONTAINER_NAME):latest
 	$(CONTAINER_ENGINE) tag  \
 		$(CONTAINER_NAME):$(CONTAINER_TAG) \
 		$(REGISTRY_HUB)/${REGISTRY_USERNAME}/$(CONTAINER_NAME):$(CONTAINER_TAG)
@@ -98,8 +102,7 @@ publish:
 	$(CONTAINER_ENGINE) push \
 		$(REGISTRY_HUB)/${REGISTRY_USERNAME}/${CONTAINER_NAME}:latest
 
-#TODO: List info from image (sys packages, ansible-core version, collections, python deps, etc)
-info:
+info: # List information about the published container image
 	@echo "\n\n***************************** Image Layers ... \n"
 	$(CONTAINER_ENGINE) history --human $(CONTAINER_NAME):$(CONTAINER_TAG)
 	@echo "\n\n***************************** Ansible Version ... \n"
@@ -112,4 +115,4 @@ info:
 	$(CONTAINER_ENGINE) container run -it --rm $(CONTAINER_NAME):$(CONTAINER_TAG) rpm -qa
 
 shell: # Run an interactive shell in the execution environment
-	$(CONTAINER_ENGINE) run -it --rm $(CONTAINER_NAME):$(CONTAINER_TAG) /bin/bash
+	$(CONTAINER_ENGINE) run -it --rm $(CONTAINER_NAME):latest /bin/bash
