@@ -30,7 +30,7 @@ GIT_HASH ?= $(shell git log --format="%h" -n 1)
 CONTAINER_TAG ?= $(GIT_HASH)
 
 .PHONY : header clean lint check build scan test publish list shell
-all: header clean lint build publish
+all: header clean lint build test publish
 
 header:
 	@echo "\n\n***************************** Ansible Automation Platform - Makefile for Execution Environments \n"
