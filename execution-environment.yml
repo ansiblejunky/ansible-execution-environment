@@ -49,6 +49,9 @@ additional_build_steps:
     RUN curl https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo --output /etc/yum.repos.d/hashicorp.repo && \
      dnf -y install packer
 
+    # Install open-scap command line tool to run security scans on target systems and generate reports
+    RUN dnf -y install openscap-scanner
+
     # Clean up
     RUN dnf update -y \
       && dnf clean all \

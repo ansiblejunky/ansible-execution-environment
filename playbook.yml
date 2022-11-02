@@ -1,11 +1,10 @@
 ---
-# Playbook to test various operations against the newly built Execution Environment image
-
-- hosts: localhost
+- name: Test Execution Environment
+  hosts: localhost
   connection: local
   gather_facts: false
 
   tasks:
     - name: Ensure basic operations
-      debug: "TODO: Add functional testing here"
-      
+      ansible.builtin.debug:
+        msg: "TODO: Add functional testing here"

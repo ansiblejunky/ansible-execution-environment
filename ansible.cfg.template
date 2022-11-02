@@ -11,4 +11,4 @@ token=$ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_TOKEN
 [galaxy_server.community]
 url=https://galaxy.ansible.com
 # Get the token from https://galaxy.ansible.com/me/preferences and use envsubst tool
-token=$ANSIBLE_GALAXY_SERVER_COMMUNITY_TOKEN
+token=$ANSIBLE_GALAXY_SERVER_RELEASE_GALAXY_TOKEN

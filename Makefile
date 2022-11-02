@@ -41,6 +41,7 @@ clean: # Clean temporary files, folders and images
 	rm -rf ansible-navigator.log
 	$(CONTAINER_ENGINE) image prune -a -f
 
+#TODO: Test if tokens are valid/expired before building
 lint: # Lint the repository with yamllint
 	@echo "\n\n***************************** Linting... \n"
 	yamllint .
@@ -71,12 +72,15 @@ build: # Build the execution environment image
 		--container-runtime $(CONTAINER_ENGINE) 2>&1 | tee -a ansible-builder.log
 
 scan: # Scan image for vulnerabilities https://www.redhat.com/sysadmin/using-quayio-scanner
+	@echo "\n\n***************************** Scanning... \n"
 	echo .
 
 inspect: # Inspect built image to show information
+	@echo "\n\n***************************** Inspecting... \n"
 	$(CONTAINER_ENGINE) inspect $(CONTAINER_NAME):$(CONTAINER_TAG)
 
 test: # Run the example playbook using the built container image
+	@echo "\n\n***************************** Testing... \n"
 	ansible-navigator run \
 		playbook.yml \
 		--container-engine $(CONTAINER_ENGINE) \
@@ -86,6 +90,7 @@ test: # Run the example playbook using the built container image
 
 #TODO: See about adding info (LABELS) to the released image on Quay.io (packages, ansible-core version, collections, python deps, etc)
 publish: # Publish the image with proper tags to container registry
+	@echo "\n\n***************************** Publishing... \n"
 	$(CONTAINER_ENGINE) login $(REGISTRY_HUB)
 	$(CONTAINER_ENGINE) tag  \
 		$(CONTAINER_NAME):$(CONTAINER_TAG) $(CONTAINER_NAME):latest

@@ -11,6 +11,7 @@ General information on [Ansible Controller](https://docs.ansible.com/automation-
 - ansible-navigator (includes ansible-builder, etc)
 - yaml-lint
 - jq
+- envsubst
 
 Example using Mac OS:
 
@@ -28,6 +29,19 @@ pyenv install 3.10.2
 pyenv activate 3.10.2 ansible
 # Install ansible-navigator and related tools
 pip install ansible-navigator[ansible-core]
+```
+
+## Tokens
+
+A template [ansible.cfg](./ansible.cfg.template) file is available to simplify the configurations necessary to authenticate to Automation Hub and Ansible Galaxy.
+
+```shell
+# Obtain an API tokens and export to an environment variable
+export ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_TOKEN=<token>
+export ANSIBLE_GALAXY_SERVER_RELEASE_GALAXY_TOKEN=<token>
+
+# Generate ansible.cfg file
+envsubst < ansible.cfg.template > ansible.cfg
 ```
 
 ## Login
@@ -136,9 +150,9 @@ ansible-navigator run playbook.yml --container-engine docker --execution-environ
 ansible-navigator config --container-engine docker --execution-environment-image ansible-ee:5.0
 ```
 
-## Push the Image
+## Publish the Image
 
-Once you have built the image locally, tested it, and scanned it for security issues - you are now ready to push the image to a registry of choice.
+Once you have built the image locally, tested it, and scanned it for security issues - you are now ready to publish the image to a registry of choice.
 
 ```bash
 # Example using quay.io
