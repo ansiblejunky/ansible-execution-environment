@@ -174,8 +174,10 @@ Leverage the following utils to help migrate pre-existing python virtual environ
 
 ## Tips and Tricks
 
-OpenShift pipeline:
+Issue and workaround when using ee29-rhel8 base image with vmware ansible collection:
+https://github.com/ansible/ansible-builder/issues/444
 
+OpenShift pipeline:
 [How to Build Ansible Execution Environments with OpenShift Pipelines](https://cloud.redhat.com/blog/how-to-build-ansible-execution-environments-with-openshift-pipelines)
 
 Default execution environment that ansible-navigator uses when not specified: [quay.io/ansible/creator-ee](https://github.com/ansible/creator-ee)
