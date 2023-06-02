@@ -13,7 +13,7 @@ ansible-navigator:
 #       name: shell
 #       type: become
   execution-environment:
-    container-engine: docker
+    container-engine: podman
 #     environment-variables:
 #       pass:
 #         - ONE

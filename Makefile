@@ -9,7 +9,7 @@
 # https://makefiletutorial.com/
 
 # Generic parameters
-CONTAINER_ENGINE ?= docker
+CONTAINER_ENGINE ?= podman
 VERBOSITY ?= 3
 
 # Source parameters

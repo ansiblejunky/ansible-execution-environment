@@ -85,9 +85,10 @@ Now that you have authenticated with a registry, you can pull down images from t
 
 ```bash
 # Pull base images for Ansible from registry.redhat.io
-docker pull registry.redhat.io/ansible-automation-platform-22/ee-minimal-rhel8:latest
-docker pull registry.redhat.io/ansible-automation-platform-22/ee-supported-rhel8:latest
-docker pull registry.redhat.io/ansible-automation-platform-22/ansible-builder-rhel8:latest
+docker pull registry.redhat.io/ansible-automation-platform-23/ee-29-rhel8:latest
+docker pull registry.redhat.io/ansible-automation-platform-23/ee-minimal-rhel8:latest
+docker pull registry.redhat.io/ansible-automation-platform-23/ee-supported-rhel8:latest
+docker pull registry.redhat.io/ansible-automation-platform-23/ansible-builder-rhel8:latest
 
 # Pull images from hub.docker.com
 docker login
@@ -166,7 +167,7 @@ podman tag ansible-ee:6.0 hub.example.com:443/ansible-ee
 podman push hub.example.com:443/ansible-ee --remove-signatures
 ```
 
-## Migration of Virtual Environments
+## Migration of Python Virtual Environments
 
 Leverage the following utils to help migrate pre-existing python virtual environments to execution environments.
 
@@ -174,8 +175,14 @@ Leverage the following utils to help migrate pre-existing python virtual environ
 
 ## Tips and Tricks
 
+To help resolve pip/python dependency issues, install [johnnydep](https://pypi.org/project/johnnydep/) inside your current venv and leverage the tool to check various dependencies for python modules that might be causing issues. For example `johnnydep requests`.
+
 Issue and workaround when using ee29-rhel8 base image with vmware ansible collection:
 https://github.com/ansible/ansible-builder/issues/444
+
+Issue with using ibm_zos_cics collection:
+https://github.com/ansible/ansible-builder/issues/533
+https://github.com/ansible-collections/ibm_zos_cics/issues/112
 
 OpenShift pipeline:
 [How to Build Ansible Execution Environments with OpenShift Pipelines](https://cloud.redhat.com/blog/how-to-build-ansible-execution-environments-with-openshift-pipelines)
@@ -201,7 +208,7 @@ How to run `--syntax-check` using `ansible-navigator`:
 Start shell session inside container image:
 
 ```yaml
-docker run -it registry.redhat.io/ansible-automation-platform-22/ee-minimal-rhel8:latest /bin/bash
+docker run -it registry.redhat.io/ansible-automation-platform-23/ee-minimal-rhel8:latest /bin/bash
 ```
 
 Run adhoc commands inside image:
@@ -231,8 +238,8 @@ trusted-host = artifactory.acme.com
 EOF
 
 # Then run the containers
-podman run -d -it --name custom-ee-supported registry.redhat.io/ansible-automation-platform-22/ee-supported-rhel8:latest /bin/bash
-podman run -d -it --name custom-ee-builder registry.redhat.io/ansible-automation-platform-22/ansible-builder-rhel8:latest /bin/bash
+podman run -d -it --name custom-ee-supported registry.redhat.io/ansible-automation-platform-23/ee-supported-rhel8:latest /bin/bash
+podman run -d -it --name custom-ee-builder registry.redhat.io/ansible-automation-platform-23/ansible-builder-rhel8:latest /bin/bash
 
 # Then copy the yum repo file into the containers
 podman cp ubi.repo custom-ee-supported:/etc/yum.repos.d/
@@ -260,6 +267,7 @@ ansible-builder:
 - [Ansible Builder - Guide](https://access.redhat.com/documentation/en-us/red_hat_ansible_automation_platform/2.1/html/ansible_builder_guide/assembly-using-builder)
 - [Ansible Builder - Read The Docs](https://ansible-builder.readthedocs.io/en/latest/index.html)
 - [Ansible Builder - Source Code](https://github.com/ansible/ansible-builder)
+- [Ansible Builder - Releases](https://github.com/ansible/ansible-builder/releases)
 
 ansible-navigator:
 
