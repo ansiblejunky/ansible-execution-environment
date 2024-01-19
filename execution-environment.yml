@@ -29,14 +29,18 @@ additional_build_steps:
     - RUN whoami
     - RUN cat /etc/os-release
     - RUN echo PKGMGR = $PKGMGR, PYCMD = $PYCMD
+
     # Upgrade pip to use improved dependency resolver
     - RUN $PYCMD -m pip install --upgrade pip
+
     # Install Red Hat OpenShift client tools by enabling repo (prepare with manual steps below)
     # https://access.redhat.com/solutions/6985157
     # https://docs.openshift.com/container-platform/4.13/cli_reference/openshift_cli/getting-started-cli.html#cli-installing-cli-rpm_cli-developer-commands
     # subscription-manager attach --pool=`subscription-manager list --available --matches '*OpenShift*' | grep "Pool ID" | awk '{print $3}'`
-    # subscription-manager repos --enable="rhocp-4.12-for-rhel-9-x86_64-rpms"
-    - ENV PKGMGR_OPTS "--nodocs --setopt install_weak_deps=0 --enablerepo=rhocp-4.12-for-rhel-9-x86_64-rpms"
+    # subscription-manager repos --list | grep rhocp-4.14
+    # (not needed) subscription-manager repos --enable="rhocp-4.12-for-rhel-9-x86_64-rpms"
+    - ENV PKGMGR_OPTS "--nodocs --setopt install_weak_deps=0 --enablerepo=rhocp-4.14-for-rhel-9-aarch64-rpms"
+
     # Install Microsoft azure-cli command line tool (needs dnf to install from url)
     # https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf
     - >

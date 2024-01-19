@@ -4,4 +4,3 @@ context
 env.sh
 ansible.cfg
 .vagrant
-.DS_Store

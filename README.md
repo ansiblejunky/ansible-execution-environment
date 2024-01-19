@@ -9,7 +9,7 @@ General information on [Ansible Controller](https://docs.ansible.com/automation-
 - Start Vagrant machine `vagrant up`
 - Login to Vagrant machine `vagrant ssh`
 - Prepare environment: `source ~/ansible/bin/activate && cd /vagrant`
-- Edit dependency files: requirements.yml, requirements.txt, bindep.txt
+- Edit dependency files: `requirements.yml`, `requirements.txt`, `bindep.txt`
 - Update tokens
   - Generate tokens from Galaxy and Automation Hub
   - Set environment variables with token values (See below)
@@ -24,29 +24,27 @@ General information on [Ansible Controller](https://docs.ansible.com/automation-
 
 ## Requirements
 
-RHEL build server (vagrant is used in this repo) with the following tools installed:
+### Build server
 
-- podman
-- skopio [https://github.com/containers/skopeo)
-- ansible-navigator (includes ansible-builder, etc)
-- yaml-lint
-- jq
-- envsubst
+This repository uses `vagrant` to spin up a RHEL server and then [provisions](files/provision.sh) it.
 
-## Tokens
+### Tokens
 
-A template [ansible.cfg.template](./files/ansible.cfg.template) file is available to simplify the configurations necessary to authenticate to Automation Hub and Ansible Galaxy.
+To access the Ansible content (collections) and build execution environments, you'll need to provide authentication using a token. This is configured within the `ansible.cfg` in the root folder. To generate this file, use the template [ansible.cfg.template](./files/ansible.cfg.template) which authenticates to both Automation Hub and Ansible Galaxy. This means we will always pull from Automation Hub first, but if not found we default to using Ansible Galaxy for content.
+
+First, set the following environment variables with the appropriate token strings. And then use the `envsubst` command to generate the necessary `ansible.cfg` file.
 
 ```shell
-# Obtain an API tokens and export to an environment variable
-export ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_TOKEN=<token>
-export ANSIBLE_GALAXY_SERVER_RELEASE_GALAXY_TOKEN=<token>
+# Automation Hub token https://console.redhat.com/ansible/automation-hub/token
+export ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_TOKEN=
+# Ansible Galaxy token https://galaxy.ansible.com/ui/token/
+export ANSIBLE_GALAXY_SERVER_RELEASE_GALAXY_TOKEN=
 
 # Generate ansible.cfg file
 envsubst < files/ansible.cfg.template > ./ansible.cfg
 ```
 
-## Login
+### Image registry
 
 Ensure you login to the registry of choice using podman/docker command `podman login <registry_url>`
 
@@ -129,30 +127,20 @@ ansible-ee                 5.0             9fec21fe39be   2 hours ago     987MB
 
 ## Scan the Image
 
-TODO: Using podman...
+It's important to scan your image for vulnerabilities.  Below are a couple articles showing how to do that. The recommendation is to implement this inside the [Makefile](./Makefile) in this repository so you can run it easily as part of your pipeline.
 
-Don't forget security! Let's scan the image.
-https://www.redhat.com/en/blog/using-snyk-and-podman-scan-container-images-development-deployment
-[DevSecOps: Image scanning in your pipelines using quay.io scanner](https://www.redhat.com/sysadmin/using-quayio-scanner)
+- [Using Snyk and Podman to scan container images from development to deployment](https://www.redhat.com/en/blog/using-snyk-and-podman-scan-container-images-development-deployment)
+- [DevSecOps: Image scanning in your pipelines using quay.io scanner](https://www.redhat.com/sysadmin/using-quayio-scanner)
 
-```yaml
-# Login to Docker Hub
-docker login
-
-# Login to Synk
-docker scan --login
-
-# Scan the image
-docker scan ansible-execution-env:5.0
-```
-
-## Run the Image
+## Test the Image
 
 We can test that everything is working by running an Ansible Playbook in the image using `ansible-navigator`. The tool launches the container, runs the playbook and shows an interactive screen where you can watch the playbook run through. To quit the tool, use similar mechanism `:q!` like within a `vi` editor.
 
-```yaml
+```shell
+# Run playbook to test basic operations against new image
 ansible-navigator run playbook.yml --container-engine podman --execution-environment-image ansible-ee:5.0
 
+# Check configuration of new image
 ansible-navigator config --container-engine podman --execution-environment-image ansible-ee:5.0
 ```
 
@@ -172,13 +160,15 @@ podman tag ansible-ee:6.0 hub.example.com:443/ansible-ee
 podman push hub.example.com:443/ansible-ee --remove-signatures
 ```
 
-## Migration of Python Virtual Environments
-
-Leverage the following utils to help migrate pre-existing python virtual environments to execution environments.
-
-[Redhat Communities of Practice Execution Environment Utilities Collection](https://github.com/redhat-cop/ee_utilities)
-
 ## Tips and Tricks
+
+Building:
+
+- [How to build multi-architecture container images](https://developers.redhat.com/articles/2023/11/03/how-build-multi-architecture-container-images)
+
+Migration of Python Virtual Environments:
+
+- [Redhat Communities of Practice Execution Environment Utilities Collection](https://github.com/redhat-cop/ee_utilities)
 
 Ansible Collection issues:
 
@@ -204,39 +194,33 @@ Pipelines:
 
 - [How to Build Ansible Execution Environments with OpenShift Pipelines](https://cloud.redhat.com/blog/how-to-build-ansible-execution-environments-with-openshift-pipelines)
 
-Default execution environment that ansible-navigator uses when not specified: [quay.io/ansible/creator-ee](https://github.com/ansible/creator-ee)
+Ansible Navigator:
 
-Examine execution environment using ansible-navigator:
-`ansible-navigator --eei <image-name>`
-
-Extract list of collections from existing execution environment:
-`ansible-navigator --eei <image-name> collections --mode stdout`
-
-Use Credentials within `ansible-navigator` tool:
-
-- [How Do I Use Ansible Tower's Credential Parameters (Machine, Network, Cloud) in my Playbook?](https://access.redhat.com/solutions/3332591)
-- Mount the file(s) using `--eev` parameter on ansible-navigator
-`--eev  --execution-environment-volume-mounts    Specify volume to be bind mounted within an execution environment (--eev /home/user/test:/home/user/test:Z)`
-
-How to run `--syntax-check` using `ansible-navigator`:
+- Default execution environment that ansible-navigator uses when not specified: [quay.io/ansible/creator-ee](https://github.com/ansible/creator-ee)
+- Examine execution environment using ansible-navigator: `ansible-navigator --eei <image-name>`
+- Extract list of collections from existing execution environment: `ansible-navigator --eei <image-name> collections --mode stdout`
+- Use Credentials within `ansible-navigator` tool:
+  - [How Do I Use Ansible Tower's Credential Parameters (Machine, Network, Cloud) in my Playbook?](https://access.redhat.com/solutions/3332591)
+  - Mount the file(s) using `--eev` parameter on ansible-navigator: `--eev  --execution-environment-volume-mounts    Specify volume to be bind mounted within an execution environment (--eev /home/user/test:/home/user/test:Z)`
+- How to run `--syntax-check` using `ansible-navigator`:
 
 ```shell
 ansible-navigator run <playbook> --syntax-check --mode stdout`
 ```
 
-Start shell session inside container image:
+- Start shell session inside container image:
 
 ```shell
-podman run -it registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel8:latest /bin/bash
+podman run -it registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel9:latest /bin/bash
 ```
 
-Run adhoc commands inside image:
+- Run adhoc commands inside image:
 
 ```shell
 podman run --rm <image-name> <command>
 ```
 
-Change the yum and pip repositories within the base images:
+- Change the yum and pip repositories within the base images:
 
 ```shell
 # Create yum repository file locally
@@ -278,6 +262,43 @@ podman commit --message "Replaced yum repos" --author "ACME Company" <containerI
 podman push <image-name> quay.io/username/myimage
 ```
 
+- Search for images
+
+The following example searches for images and then checks collections, system packages and python packages manually before we run the ansible-builder command.
+
+```shell
+# Login to vagrant build server
+vagrant ssh
+source ~/ansible/bin/activate
+cd /vagrant
+
+# Login to registry
+podman login registry.redhat.io
+# Search registry to find latest images
+# https://docs.podman.io/en/stable/markdown/podman-search.1.html
+podman search ansible-automation-platform-24
+
+# Pull image and start container
+podman run -it --rm registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel9:latest /bin/bash
+
+# Check dependencies for collections
+ansible-galaxy collection install -r requirements.yml
+cd /home/runner/.ansible/collections/ansible_collections/
+grep -R python39 * | grep bindep.txt
+grep -R suds *
+# Look at potential newer versions of the collections
+ansible-galaxy collection install --upgrade -r requirements.yml
+
+# Install windows packages
+microdnf install krb5-libs krb5-workstation krb5-devel
+# Install Python 3.8 developer tools
+microdnf install vi git rsync unzip tar sudo gcc openssl openssl-devel gcc-c++ dnf libpq-devel python38-devel glibc-headers libcurl-devel libssh-devel jq python3-Cython python3-devel openldap-devel
+# Install Python 3.9 developer tools
+microdnf install vi git rsync unzip tar sudo gcc openssl openssl-devel gcc-c++ dnf libpq-devel python39-devel glibc-headers libcurl-devel libssh-devel jq python3-Cython python3-devel openldap-devel
+# Test the installation of required python libraries
+pip3 install -r requirements.txt
+```
+
 ## Tools
 
 ansible-builder:
@@ -291,7 +312,7 @@ ansible-builder:
 ansible-navigator:
 
 - [Ansible Navigator Documentation](https://ansible.readthedocs.io/projects/navigator/)
-- [Ansible Navigator Creator Guide](https://access.redhat.com/documentation/en-us/red_hat_ansible_automation_platform/2.0-ea/html-single/ansible_navigator_creator_guide/index)
+- [Ansible Navigator Creator Guide](https://access.redhat.com/documentation/en-us/red_hat_ansible_automation_platform/2.4/html/automation_content_navigator_creator_guide/index)
 - [Introduction to Ansible Runner](https://ansible-runner.readthedocs.io/en/stable/intro/)
 - [Ansible Navigator - Source Code](https://github.com/ansible/ansible-navigator/)
 - [Ansible Navigator - Settings](https://github.com/ansible/ansible-navigator/blob/main/docs/settings.rst)
@@ -321,9 +342,7 @@ podman:
 
 skopeo:
 
-docker:
-
-- [The Docker Ecosystem: An Introduction to Common Components](https://www.digitalocean.com/community/tutorials/the-docker-ecosystem-an-introduction-to-common-components)
+- [skopeo](https://github.com/containers/skopeo)
 
 ## References
 
@@ -336,10 +355,12 @@ General:
 - [Best Practices for Writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/)
 - [5 Podman features to try now](https://www.redhat.com/sysadmin/podman-features-1)
 - [Working with Red Hat Enterprise Linux Universal Base Images (UBI)](https://developers.redhat.com/blog/2019/05/31/working-with-red-hat-enterprise-linux-universal-base-images-ubi#)
+- [Running Virtual Machines Under Vagrant on the New Mac M1/M2/M3](https://betterprogramming.pub/managing-virtual-machines-under-vagrant-on-a-mac-m1-aebc650bc12c)
 
 Execution Environments:
 
 - [What are Red Hat Ansible Automation Platform automation execution environments?](https://www.redhat.com/en/technologies/management/ansible/automation-execution-environments)
+- [AWX - Execution Environments and using awx-manage](https://github.com/ansible/awx/blob/devel/docs/execution_environments.md)
 - [Blog - The Anatomy of Automation Execution Environments](https://www.ansible.com/blog/the-anatomy-of-automation-execution-environments)
 - [Automation Controller - Execution Environments](https://docs.ansible.com/automation-controller/latest/html/userguide/execution_environments.html)
 - [Execution Environment Setup Reference](https://docs.ansible.com/automation-controller/latest/html/userguide/ee_reference.html#execution-environment-setup-reference)
@@ -347,42 +368,3 @@ Execution Environments:
 Makefiles:
 
 - [Docker and Makefiles: Building and Pushing Images with Make](https://earthly.dev/blog/docker-and-makefiles/)
-
-
-
-
-
-
-
-
-
-
-
-source ~/venvs/python3.9-ansible2.14/bin/activate
-cd ~/aap-image_build/ee-29
-podman run -it --rm -v .:/home/runner/local registry.redhat.io/ansible-automation-platform-23/ee-29-rhel8:latest /bin/bash
-pip3 install --upgrade pip
-pip3 uninstall openshift
- 
-
-# Check dependencies for collections
-ansible-galaxy collection install -r /home/runner/local/files/requirements.yml
-cd /home/runner/.ansible/collections/ansible_collections/
-grep -R python39 * | grep bindep.txt
-grep -R suds *
-# Look at potential newer versions of the collections
-ansible-galaxy collection install --upgrade -r /home/runner/local/files/requirements.yml
-
-# Install windows packages
-microdnf install krb5-libs krb5-workstation krb5-devel
-# Install Python 3.8 developer tools
-microdnf install vi git rsync unzip tar sudo gcc openssl openssl-devel gcc-c++ dnf libpq-devel python38-devel glibc-headers libcurl-devel libssh-devel jq python3-Cython python3-devel openldap-devel
-# Install Python 3.9 developer tools
-microdnf install vi git rsync unzip tar sudo gcc openssl openssl-devel gcc-c++ dnf libpq-devel python39-devel glibc-headers libcurl-devel libssh-devel jq python3-Cython python3-devel openldap-devel
-# Test the installation of required python libraries
-pip3 install -r /home/runner/local/files/requirements.txt
-
- 
-podman run -it --rm -v .:/home/runner/local registry.redhat.io/ansible-automation-platform-23/ee-minimal-rhel8:latest /bin/bash
-
- 

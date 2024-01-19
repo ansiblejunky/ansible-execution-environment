@@ -33,4 +33,5 @@ openldap-devel [platform:rpm]
 
 # Dependency for supporting pip packages that need to be compiled
 # This avoids errors that complain about python header files missing
-python39-devel [platform:rpm]
+# 1/19/2024 package is not found when building on arm64 rhel machine!
+#python39-devel [platform:rpm]
