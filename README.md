@@ -368,3 +368,11 @@ Execution Environments:
 Makefiles:
 
 - [Docker and Makefiles: Building and Pushing Images with Make](https://earthly.dev/blog/docker-and-makefiles/)
+
+## License
+
+[GNU General Public License v3.0](LICENSE)
+
+## Author
+
+John Wadleigh
