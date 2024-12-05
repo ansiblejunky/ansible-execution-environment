@@ -15,6 +15,7 @@ TARGET_TAG ?= v5
 CONTAINER_ENGINE ?= podman
 VERBOSITY ?= 3
 SOURCE_HUB ?= registry.redhat.io
+SOURCE_USERNAME ?= jwadleig
 TARGET_HUB ?= quay.io
 TARGET_USERNAME ?= jwadleig
 TARGET_NAME ?= ansible-ee-minimal
@@ -51,7 +52,7 @@ lint: # Lint the repository with yamllint
 
 build: # Build the execution environment image
 	@echo "\n\n***************************** Building... \n"
-	$(CONTAINER_ENGINE) login --get-login $(SOURCE_HUB)
+	$(CONTAINER_ENGINE) login -u $(SOURCE_USERNAME) $(SOURCE_HUB)
 	if [ -a ansible.cfg ] ; \
 	then \
 		echo "Using existing ansible.cfg"; \
@@ -87,21 +88,21 @@ test: # Run the example playbook using the built container image
 
 publish: # Publish the image with proper tags to container registry
 	@echo "\n\n***************************** Publishing... \n"
-	$(CONTAINER_ENGINE) login $(TARGET_HUB)
+	$(CONTAINER_ENGINE) login -u $(TARGET_USERNAME) $(TARGET_HUB)
 	$(CONTAINER_ENGINE) tag  \
 		$(TARGET_NAME):$(TARGET_TAG) $(TARGET_NAME):latest
 	$(CONTAINER_ENGINE) tag  \
 		$(TARGET_NAME):$(TARGET_TAG) \
-		$(TARGET_HUB)/${TARGET_USERNAME}/$(TARGET_NAME):$(TARGET_TAG)
+		$(TARGET_HUB)/$(TARGET_NAME):$(TARGET_TAG)
 	$(CONTAINER_ENGINE) push \
-		$(TARGET_HUB)/${TARGET_USERNAME}/$(TARGET_NAME):$(TARGET_TAG)
+		$(TARGET_HUB)/$(TARGET_NAME):$(TARGET_TAG)
 	$(CONTAINER_ENGINE) pull \
-		$(TARGET_HUB)/${TARGET_USERNAME}/$(TARGET_NAME):$(TARGET_TAG)
+		$(TARGET_HUB)/$(TARGET_NAME):$(TARGET_TAG)
 	$(CONTAINER_ENGINE) tag  \
-		$(TARGET_HUB)/${TARGET_USERNAME}/$(TARGET_NAME):$(TARGET_TAG) \
-		$(TARGET_HUB)/${TARGET_USERNAME}/${TARGET_NAME}\:latest
+		$(TARGET_HUB)/$(TARGET_NAME):$(TARGET_TAG) \
+		$(TARGET_HUB)/${TARGET_NAME}\:latest
 	$(CONTAINER_ENGINE) push \
-		$(TARGET_HUB)/${TARGET_USERNAME}/${TARGET_NAME}:latest
+		$(TARGET_HUB)/${TARGET_NAME}:latest
 
 info: # List information about the published container image
 	@echo "\n\n***************************** Image Layers ... \n"

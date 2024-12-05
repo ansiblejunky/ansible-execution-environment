@@ -1,15 +1,15 @@
-# Ansible Lint triggered via GitHub Actions
+# YAML Lint triggered via GitHub Actions
 # https://github.com/marketplace/actions/run-ansible-lint
 # https://docs.github.com/en/actions/quickstart
-
-name: ansible-lint
+---
+name: 'Yamllint'
 on: [push, pull_request]
 jobs:
   build:
-    name: Ansible Lint
+    name: 'Yamllint'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@main
-      - name: Run ansible-lint
-        uses: ansible/ansible-lint@main
+      - name: Perform yamllint
+        uses: karancode/yamllint-github-action@master

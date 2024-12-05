@@ -6,17 +6,13 @@ General information on [Ansible Controller](https://docs.ansible.com/automation-
 
 ## Quick Start
 
-- Start Vagrant machine `vagrant up`
-- Login to Vagrant machine `vagrant ssh`
-- Prepare environment: `source ~/ansible/bin/activate && cd /vagrant`
-- Edit dependency files: `requirements.yml`, `requirements.txt`, `bindep.txt`
-- Update tokens
-  - Generate tokens from Galaxy and Automation Hub
-  - Set environment variables with token values (See below)
-- Edit `execution-environment.yml` accordingly
-- Edit `Makefile`
-  - Change the tag (v4, v5, etc) to build a new version
-- Login to source registry `podman login ...`
+- Navigate to build server
+- Clone down this repository
+- Customize
+  - Edit dependencies `requirements.yml`, `requirements.txt`, `bindep.txt`
+  - Update tokens
+  - Edit `execution-environment.yml` accordingly
+  - Edit `Makefile`
 - Build it `make build`
 - Publish it `make publish`
 - Destroy Vagrant machine `vagrant destroy`
@@ -28,6 +24,15 @@ General information on [Ansible Controller](https://docs.ansible.com/automation-
 
 This repository uses `vagrant` to spin up a RHEL server and then [provisions](files/provision.sh) it.
 
+```shell
+# Start vagrant machine
+vagrant up
+# Connect to vagrant machine
+vagrant ssh
+# Prepare Ansible environment
+source ~/ansible/bin/activate && cd /vagrant
+```
+
 ### Tokens
 
 To access the Ansible content (collections) and build execution environments, you'll need to provide authentication using a token. This is configured within the `ansible.cfg` in the root folder. To generate this file, use the template [ansible.cfg.template](./files/ansible.cfg.template) which authenticates to both Automation Hub and Ansible Galaxy. This means we will always pull from Automation Hub first, but if not found we default to using Ansible Galaxy for content.
@@ -36,9 +41,7 @@ First, set the following environment variables with the appropriate token string
 
 ```shell
 # Automation Hub token https://console.redhat.com/ansible/automation-hub/token
-export ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_TOKEN=
-# Ansible Galaxy token https://galaxy.ansible.com/ui/token/
-export ANSIBLE_GALAXY_SERVER_RELEASE_GALAXY_TOKEN=
+export ANSIBLE_HUB_TOKEN=
 
 # Generate ansible.cfg file
 envsubst < files/ansible.cfg.template > ./ansible.cfg
@@ -106,8 +109,7 @@ Now let's run `ansible-builder` to create the image based on our template. Note 
 
 ```yaml
 # Set tokens using environment variables
-export ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_TOKEN="token_value"
-export ANSIBLE_GALAXY_SERVER_COMMUNITY_TOKEN="token_value"
+export ANSIBLE_HUB_TOKEN="token_value"
 
 # Generate ansible.cfg using template
 envsubst < files/ansible.cfg.template > ./ansible.cfg
