@@ -1,0 +1,6 @@
+*.log
+*.json
+context
+env.sh
+ansible.cfg
+.vagrant

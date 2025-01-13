@@ -1,0 +1,14 @@
+# YAML Lint triggered via GitHub Actions
+# https://github.com/marketplace/actions/yamllint-github-action
+---
+name: 'Yamllint'
+on: [push, pull_request]
+jobs:
+  build:
+    name: 'Yamllint'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@main
+      - name: Perform yamllint
+        uses: karancode/yamllint-github-action@master
