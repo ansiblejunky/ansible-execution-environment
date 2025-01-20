@@ -1,131 +1,65 @@
-# Ansible Execution Environments Demo
+# Ansible Execution Environment
 
-Basic information to help you get familiar with Ansible Execution Environments and the latest Ansible Automation Platform.
-
-General information on [Ansible Controller](https://docs.ansible.com/automation-controller/latest/html/userguide/index.html) and the related [execution environments](https://docs.ansible.com/automation-controller/latest/html/userguide/ee_reference.html).
+Example repository to build Ansible Execution Environments using a Makefile.
 
 ## Quick Start
 
 - Navigate to build server
+- Optionally provision build server using [script](files/provision.sh)
 - Clone down this repository
 - Customize
   - Edit dependencies `requirements.yml`, `requirements.txt`, `bindep.txt`
-  - Update tokens
+  - Set token environment variable `ANSIBLE_HUB_TOKEN`
   - Edit `execution-environment.yml` accordingly
-  - Edit `Makefile`
+  - Edit `Makefile` variables
+- Cleanup with `make clean`
+- Test token with `make token`
 - Build it `make build`
+- Test it `make test`
+- Inspect it `make inspect`
+- Review it `make info`
+- (Optional) Look inside `make shell`
 - Publish it `make publish`
-- Destroy Vagrant machine `vagrant destroy`
 - Enjoy your day
 
-## Requirements
+## Find Base Image
 
-### Build server
-
-This repository uses `vagrant` to spin up a RHEL server and then [provisions](files/provision.sh) it.
-
-```shell
-# Start vagrant machine
-vagrant up
-# Connect to vagrant machine
-vagrant ssh
-# Prepare Ansible environment
-source ~/ansible/bin/activate && cd /vagrant
-```
-
-### Tokens
-
-To access the Ansible content (collections) and build execution environments, you'll need to provide authentication using a token. This is configured within the `ansible.cfg` in the root folder. To generate this file, use the template [ansible.cfg.template](./files/ansible.cfg.template) which authenticates to both Automation Hub and Ansible Galaxy. This means we will always pull from Automation Hub first, but if not found we default to using Ansible Galaxy for content.
-
-First, set the following environment variables with the appropriate token strings. And then use the `envsubst` command to generate the necessary `ansible.cfg` file.
-
-```shell
-# Automation Hub token https://console.redhat.com/ansible/automation-hub/token
-export ANSIBLE_HUB_TOKEN=
-
-# Generate ansible.cfg file
-envsubst < files/ansible.cfg.template > ./ansible.cfg
-```
-
-### Image registry
-
-Ensure you login to the registry of choice using podman/docker command `podman login <registry_url>`
-
-Automation Hub Registry (hub.example.com):
-
-- Ensure docker/podman is authorized to access registry since Automation Hub uses self-signed certificates (see info at bottom of this article)
-- Run the CLI login command `podman login hub.example.com:443`
-
-Quay Registry (quay.io):
-
-- Ensure you authorize docker/podman with this registry
-- Go to https://quay.io/ and login or create an account
-- Navigate to top-right for Account Settings
-- Select the tool icon on the left
-- Set the Docker/Podman CLI Password to enable encrypted passwords
-- Generate the encryped password (re-enter the password)
-- Select the option "Docker Login" or "Podman Login" to get the CLI command
-- Run the CLI login command to have docker/podman authorized to pull/push images
-
-Red Hat Registry (registry.redhat.io):
-
-- Ensure you perform `docker login` command to authorize with this registry.
-- Go to https://access.redhat.com/terms-based-registry/ and create a registry service account (if not already created)
-- Drill down on existing service account
-- Select the tab "Docker Login" to get the CLI command for both docker/podman
-- Run the CLI login command to have docker/podman authorized to pull/push images
-- [Troubleshooting Authentication Issues with registry.redhat.io](https://access.redhat.com/articles/3560571)
-
-Docker Hub (hub.docker.com):
-
-- Create a free account on the website
-- Login to the website
-- Run the CLI login command `docker login` with your credentials
-
-## Pull the Image
-
-Now that you have authenticated with a registry, you can pull down images from that registry. For example, you might want to pull down the Ansible base images. You can find official Ansible container images using `https://catalog.redhat.com/software/containers/search`.
+You can find official Ansible container images using `https://catalog.redhat.com/software/containers/search`. Examples of typical base images:
 
 ```bash
 # Pull base images for Ansible from registry.redhat.io
-podman pull registry.redhat.io/ansible-automation-platform-24/ee-29-rhel8:latest
-podman pull registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel8:latest
-podman pull registry.redhat.io/ansible-automation-platform-24/ee-supported-rhel8:latest
-
-# Pull images from hub.docker.com
-podman login hub.docker.com
-podman pull hello-world
-podman run hello-world
+podman pull registry.redhat.io/ansible-automation-platform-25/ee-29-rhel8:latest
+podman pull registry.redhat.io/ansible-automation-platform-25/ee-minimal-rhel8:latest
+podman pull registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel8:latest
 ```
 
-## Build the Image
+## Login to Image Registry
 
-Ansible playbooks will be executed from a container image. We define our "golden" image using a build definition file named `execution-environment.yml`.
-The image is built using that template file and running the `ansible-builder` tool.
+For both the source and target registries, ensure you login to your registry of choice using `podman login <registry_url>`.
 
-Let's first define our execution environment using yaml. [Here is an example file from this repository](./execution-environment.yml).
-
-Now let's run `ansible-builder` to create the image based on our template. Note that Podman is used by default to build images but we will use Docker instead. Also the default name and tag for the container image being built is `ansible-execution-env:latest` but it's highly recommended that you avoid using "latest" and set your own tag/version using the `--tag` argument.
-
-```yaml
-# Set tokens using environment variables
-export ANSIBLE_HUB_TOKEN="token_value"
-
-# Generate ansible.cfg using template
-envsubst < files/ansible.cfg.template > ./ansible.cfg
-
-# Test tokens
-mkdir collections
-ansible-galaxy collection download -r requirements.yml -p collections/
-rm -rf collections
-
-# Build the image and tag the image
-ansible-builder build --verbosity 3 --container-runtime=podman --tag ansible-ee:5.0
-# List images
-$ podman image list
-REPOSITORY                            TAG             IMAGE ID       CREATED         SIZE
-ansible-ee                 5.0             9fec21fe39be   2 hours ago     987MB
-```
+- Automation Hub Registry (hub.example.com):
+  - Ensure podman is authorized to access registry since Automation Hub uses self-signed certificates
+  - Run the CLI login command `podman login hub.example.com:443`
+- Quay Registry (quay.io):
+  - Ensure you authorize docker/podman with this registry
+  - Go to https://quay.io/ and login or create an account
+  - Navigate to top-right for Account Settings
+  - Select the tool icon on the left
+  - Set the Docker/Podman CLI Password to enable encrypted passwords
+  - Generate the encryped password (re-enter the password)
+  - Select the option "Docker Login" or "Podman Login" to get the CLI command
+  - Run the CLI login command to have docker/podman authorized to pull/push images
+- Red Hat Registry (registry.redhat.io):
+  - Ensure you perform `docker login` command to authorize with this registry.
+  - Go to https://access.redhat.com/terms-based-registry/ and create a registry service account (if not already created)
+  - Drill down on existing service account
+  - Select the tab "Docker Login" to get the CLI command for both docker/podman
+  - Run the CLI login command to have docker/podman authorized to pull/push images
+  - [Troubleshooting Authentication Issues with registry.redhat.io](https://access.redhat.com/articles/3560571)
+- Docker Hub (hub.docker.com):
+  - Create a free account on the website
+  - Login to the website
+  - Run the CLI login command `docker login` with your credentials
 
 ## Scan the Image
 
@@ -144,22 +78,6 @@ ansible-navigator run playbook.yml --container-engine podman --execution-environ
 
 # Check configuration of new image
 ansible-navigator config --container-engine podman --execution-environment-image ansible-ee:5.0
-```
-
-## Publish the Image
-
-Once you have built the image locally, tested it, and scanned it for security issues - you are now ready to publish the image to a registry of choice.
-
-```bash
-# Example using quay.io
-podman login quay.io
-podman tag ansible-ee:5.0 quay.io/jwadleig/ansible-ee:5.0
-podman push quay.io/jwadleig/ansible-ee:5.0
-
-# Example using onprem Automation Hub
-podman login hub.example.com:443
-podman tag ansible-ee:6.0 hub.example.com:443/ansible-ee
-podman push hub.example.com:443/ansible-ee --remove-signatures
 ```
 
 ## Tips and Tricks
@@ -222,6 +140,13 @@ podman run -it registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel
 podman run --rm <image-name> <command>
 ```
 
+- Run ansible-builder:
+
+```shell
+# Build the image and tag the image
+ansible-builder build --verbosity 3 --container-runtime=podman --tag ansible-ee:5.0
+```
+
 - Change the yum and pip repositories within the base images:
 
 ```shell
@@ -269,11 +194,6 @@ podman push <image-name> quay.io/username/myimage
 The following example searches for images and then checks collections, system packages and python packages manually before we run the ansible-builder command.
 
 ```shell
-# Login to vagrant build server
-vagrant ssh
-source ~/ansible/bin/activate
-cd /vagrant
-
 # Login to registry
 podman login registry.redhat.io
 # Search registry to find latest images
@@ -369,7 +289,11 @@ Execution Environments:
 
 Makefiles:
 
+- [Makefile Tutorial](https://makefiletutorial.com/)
 - [Docker and Makefiles: Building and Pushing Images with Make](https://earthly.dev/blog/docker-and-makefiles/)
+- [Ansible Builder and Execution Environments](https://ario.cloud/posts/ansible-builder-ee)
+- [Docker and Makefiles](https://earthly.dev/blog/docker-and-makefiles/)
+- [Best practices for building images that pass Red Hat Container Certification](https://developers.redhat.com/articles/2021/11/11/best-practices-building-images-pass-red-hat-container-certification)
 
 ## License
 
