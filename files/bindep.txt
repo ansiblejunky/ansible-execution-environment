@@ -18,6 +18,9 @@ rsync [platform:rpm]
 unzip [platform:rpm]
 tar   [platform:rpm]
 sudo  [platform:rpm]
+git-lfs [platform:rpm]
+sshpass [platform:rpm]
+rsync [platform:rpm]
 
 # Windows Authentication - Kerberos
 # https://docs.ansible.com/automation-controller/latest/html/administration/kerberos_auth.html
@@ -35,3 +38,5 @@ openldap-devel [platform:rpm]
 # This avoids errors that complain about python header files missing
 # 1/19/2024 package is not found when building on arm64 rhel machine!
 #python39-devel [platform:rpm]
+python3
+python3-pip

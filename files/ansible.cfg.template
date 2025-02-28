@@ -5,16 +5,16 @@ server_list = rh-certified, validated, community
 # ACCESSING PRIVATE AUTOMATION HUB
 # ------------------------------------------------------------------------------
 [galaxy_server.rh-certified]
-url=https://gateway.example.com/pulp_ansible/galaxy/rh-certified/
-token=$ANSIBLE_HUB_TOKEN
+url=https://aap.apps.hub.ocp4.lab.filice.eu/pulp_ansible/galaxy/rh-certified/
+token=8738952b32808c117c9236acd1c9eac40e76ae76
 
 [galaxy_server.validated]
-url=https://gateway.example.com/pulp_ansible/galaxy/validated/
-token=$ANSIBLE_HUB_TOKEN
+url=https://aap.apps.hub.ocp4.lab.filice.eu/pulp_ansible/galaxy/validated/
+token=8738952b32808c117c9236acd1c9eac40e76ae76
 
 [galaxy_server.community]
-url=https://gateway.example.com/pulp_ansible/galaxy/community/
-token=$ANSIBLE_HUB_TOKEN
+url=https://aap.apps.hub.ocp4.lab.filice.eu/pulp_ansible/galaxy/community/
+token=8738952b32808c117c9236acd1c9eac40e76ae76
 
 
 
@@ -25,7 +25,3 @@ url=https://console.redhat.com/api/automation-hub/content/published/
 auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
 # Get the token from https://console.redhat.com/ansible/automation-hub/token/ and use envsubst tool
 token=$ANSIBLE_HUB_TOKEN
-
-[galaxy_server.community]
-url=https://galaxy.ansible.com
-

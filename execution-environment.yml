@@ -2,7 +2,7 @@
 version: 3
 
 build_arg_defaults:
-  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: '--ignore-certs'
+  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: '--pre --ignore-certs'
 
 dependencies:
   galaxy: files/requirements.yml
@@ -11,7 +11,7 @@ dependencies:
 
 images:
   base_image:
-    name: 'registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel9:latest'
+    name: 'registry.redhat.io/ansible-automation-platform-25/ee-minimal-rhel9:latest'
 
 options:
   package_manager_path: /usr/bin/microdnf
@@ -39,7 +39,7 @@ additional_build_steps:
     # subscription-manager attach --pool=`subscription-manager list --available --matches '*OpenShift*' | grep "Pool ID" | awk '{print $3}'`
     # subscription-manager repos --list | grep rhocp-4.14
     # (not needed) subscription-manager repos --enable="rhocp-4.12-for-rhel-9-x86_64-rpms"
-    - ENV PKGMGR_OPTS "--nodocs --setopt install_weak_deps=0 --enablerepo=rhocp-4.14-for-rhel-9-aarch64-rpms"
+    - ENV PKGMGR_OPTS "--nodocs --setopt install_weak_deps=0 --enablerepo=rhocp-4.16-for-rhel-9-x86_64-rpms"
 
     # Install Microsoft azure-cli command line tool (needs dnf to install from url)
     # https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf
@@ -47,13 +47,16 @@ additional_build_steps:
       RUN $PKGMGR install -y dnf &&
       rpm --import https://packages.microsoft.com/keys/microsoft.asc &&
       dnf -y install -y https://packages.microsoft.com/config/rhel/9.0/packages-microsoft-prod.rpm &&
-      $PKGMGR -y install azure-cli
+      $PKGMGR -y install azure-cli &&
+      microdnf -y install --enablerepo=rhocp-4.16-for-rhel-9-x86_64-rpms openshift-clients
     # Install HashiCorp Packer (/usr/bin/packer)
     - >
       RUN curl https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo --output /etc/yum.repos.d/hashicorp.repo &&
       $PKGMGR -y install packer
     # Install Red Hat open-scap command line tool to run security scans on target systems and generate reports
     - RUN $PKGMGR -y install openscap-scanner
+    - RUN microdnf install -y python3 python3-pip   
+    - RUN pip3 install ansible-core ansible-runner
   prepend_galaxy:
     # Windows Authentication - Kerberos
     - COPY _build/configs/krb5.conf /etc/krb5.conf
@@ -69,4 +72,7 @@ additional_build_steps:
       $PKGMGR clean all &&
       rm -rf /var/cache/{dnf,yum} &&
       rm -rf /var/lib/dnf/history.* &&
-      rm -rf /var/log/*
+      rm -rf /var/log/* &&
+      curl -L https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest/openshift-client-linux.tar.gz | tar -xz -C /usr/local/bin &&
+      chmod +x /usr/local/bin/oc &&
+      git lfs install
