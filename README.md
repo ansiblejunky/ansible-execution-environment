@@ -2,6 +2,9 @@
 
 Example repository to build Ansible Execution Environments using a Makefile.
 
+TODO: Update docs to leverage new PIP_INDEX_URL environment variable option
+https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies-ansible-execution-environments#python_dependency_management
+
 ## Quick Start
 
 - Navigate to build server
@@ -131,7 +134,10 @@ ansible-navigator run <playbook> --syntax-check --mode stdout`
 - Start shell session inside container image:
 
 ```shell
+# Generic command
 podman run -it registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel9:latest /bin/bash
+# With volume mounts
+podman run -it -v $PWD:/opt/ansible registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel9:latest /bin/bash
 ```
 
 - Run adhoc commands inside image:
