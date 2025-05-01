@@ -17,11 +17,11 @@ options:
   package_manager_path: /usr/bin/microdnf
 
 additional_build_files:
-  # Windows Authentication - Kerberos
-  - src: files/krb5.conf
-    dest: configs
-  # Ansible Galaxy
+  # Ansible Galaxy - critical for ansible-galaxy to work
   - src: ansible.cfg
+    dest: configs
+  # (Optional) Windows Authentication - Kerberos
+  - src: files/krb5.conf
     dest: configs
 
 additional_build_steps:
@@ -55,10 +55,10 @@ additional_build_steps:
     # Install Red Hat open-scap command line tool to run security scans on target systems and generate reports
     - RUN $PKGMGR -y install openscap-scanner
   prepend_galaxy:
-    # Windows Authentication - Kerberos
-    - COPY _build/configs/krb5.conf /etc/krb5.conf
-    # Ansible Galaxy
+      # Ansible Galaxy - critical for ansible-galaxy to work
     - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
+    # (Optional) Windows Authentication - Kerberos
+    - COPY _build/configs/krb5.conf /etc/krb5.conf
   append_final:
     # Verify installed packages have compatible dependencies
     # Logged issue https://github.com/ansible/ansible-builder/issues/416

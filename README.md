@@ -9,7 +9,7 @@ https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies
 
 - Navigate to build server
 - Optionally provision build server using [script](files/provision.sh)
-- Clone down this repository
+- Clone this repository
 - Customize
   - Edit dependencies `requirements.yml`, `requirements.txt`, `bindep.txt`
   - Set token environment variable `ANSIBLE_HUB_TOKEN`
@@ -25,53 +25,44 @@ https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies
 - Publish it `make publish`
 - Enjoy your day
 
-## Find Base Image
+## Find and Test Image
 
-You can find official Ansible container images using `https://catalog.redhat.com/software/containers/search`. Examples of typical base images:
+Search for images and then checks collections, system packages and python packages manually before we run the ansible-builder command.
 
-```bash
-# Pull base images for Ansible from registry.redhat.io
-podman pull registry.redhat.io/ansible-automation-platform-25/ee-29-rhel8:latest
-podman pull registry.redhat.io/ansible-automation-platform-25/ee-minimal-rhel8:latest
-podman pull registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel8:latest
+```shell
+# Login to registry
+podman login registry.redhat.io
+# Search registry to find latest images
+podman search registry.redhat.io/ansible-automation-platform-25
+# Pull image and start container with volume mounts
+podman run -it -v $PWD:/opt/ansible registry.redhat.io/ansible-automation-platform-25/ee-minimal-rhel9:latest /bin/bash
+
+# Check dependencies for collections
+ansible-galaxy collection install -r requirements.yml
+cd /home/runner/.ansible/collections/ansible_collections/
+grep -R python39 * | grep bindep.txt
+grep -R suds *
+# Look at potential newer versions of the collections
+ansible-galaxy collection install --upgrade -r requirements.yml
+
+# Install windows packages
+microdnf install krb5-libs krb5-workstation krb5-devel
+# Install Python 3.8 developer tools
+microdnf install vi git rsync unzip tar sudo gcc openssl openssl-devel gcc-c++ dnf libpq-devel python38-devel glibc-headers libcurl-devel libssh-devel jq python3-Cython python3-devel openldap-devel
+# Install Python 3.9 developer tools
+microdnf install vi git rsync unzip tar sudo gcc openssl openssl-devel gcc-c++ dnf libpq-devel python39-devel glibc-headers libcurl-devel libssh-devel jq python3-Cython python3-devel openldap-devel
+# Test the installation of required python libraries
+pip3 install -r requirements.txt
 ```
 
-## Login to Image Registry
-
-For both the source and target registries, ensure you login to your registry of choice using `podman login <registry_url>`.
-
-- Automation Hub Registry (hub.example.com):
-  - Ensure podman is authorized to access registry since Automation Hub uses self-signed certificates
-  - Run the CLI login command `podman login hub.example.com:443`
-- Quay Registry (quay.io):
-  - Ensure you authorize docker/podman with this registry
-  - Go to https://quay.io/ and login or create an account
-  - Navigate to top-right for Account Settings
-  - Select the tool icon on the left
-  - Set the Docker/Podman CLI Password to enable encrypted passwords
-  - Generate the encryped password (re-enter the password)
-  - Select the option "Docker Login" or "Podman Login" to get the CLI command
-  - Run the CLI login command to have docker/podman authorized to pull/push images
-- Red Hat Registry (registry.redhat.io):
-  - Ensure you perform `docker login` command to authorize with this registry.
-  - Go to https://access.redhat.com/terms-based-registry/ and create a registry service account (if not already created)
-  - Drill down on existing service account
-  - Select the tab "Docker Login" to get the CLI command for both docker/podman
-  - Run the CLI login command to have docker/podman authorized to pull/push images
-  - [Troubleshooting Authentication Issues with registry.redhat.io](https://access.redhat.com/articles/3560571)
-- Docker Hub (hub.docker.com):
-  - Create a free account on the website
-  - Login to the website
-  - Run the CLI login command `docker login` with your credentials
-
-## Scan the Image
+## Security
 
 It's important to scan your image for vulnerabilities.  Below are a couple articles showing how to do that. The recommendation is to implement this inside the [Makefile](./Makefile) in this repository so you can run it easily as part of your pipeline.
 
 - [Using Snyk and Podman to scan container images from development to deployment](https://www.redhat.com/en/blog/using-snyk-and-podman-scan-container-images-development-deployment)
 - [DevSecOps: Image scanning in your pipelines using quay.io scanner](https://www.redhat.com/sysadmin/using-quayio-scanner)
 
-## Test the Image
+## Regression Testing
 
 We can test that everything is working by running an Ansible Playbook in the image using `ansible-navigator`. The tool launches the container, runs the playbook and shows an interactive screen where you can watch the playbook run through. To quit the tool, use similar mechanism `:q!` like within a `vi` editor.
 
@@ -135,9 +126,11 @@ ansible-navigator run <playbook> --syntax-check --mode stdout`
 
 ```shell
 # Generic command
-podman run -it registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel9:latest /bin/bash
+podman run -it registry.redhat.io/ansible-automation-platform-25/ee-minimal-rhel9:latest /bin/bash
 # With volume mounts
-podman run -it -v $PWD:/opt/ansible registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel9:latest /bin/bash
+podman run -it -v $PWD:/opt/ansible registry.redhat.io/ansible-automation-platform-25/ee-minimal-rhel9:latest /bin/bash
+# With volume mounts from SELinux enabled system
+podman run -it -v $PWD:/opt/ansible:z registry.redhat.io/ansible-automation-platform-25/ee-minimal-rhel9:latest /bin/bash
 ```
 
 - Run adhoc commands inside image:
@@ -174,8 +167,8 @@ trusted-host = artifactory.acme.com
 EOF
 
 # Then run the containers
-podman run -d -it --name custom-ee-supported registry.redhat.io/ansible-automation-platform-24/ee-supported-rhel8:latest /bin/bash
-podman run -d -it --name custom-ee-builder registry.redhat.io/ansible-automation-platform-24/ansible-builder-rhel8:latest /bin/bash
+podman run -d -it --name custom-ee-supported registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest /bin/bash
+podman run -d -it --name custom-ee-builder registry.redhat.io/ansible-automation-platform-25/ansible-builder-rhel9:latest /bin/bash
 
 # Then copy the yum repo file into the containers
 podman cp ubi.repo custom-ee-supported:/etc/yum.repos.d/
@@ -193,38 +186,6 @@ podman commit --message "Replaced yum repos" --author "ACME Company" <containerI
 
 #Then push the containers
 podman push <image-name> quay.io/username/myimage
-```
-
-- Search for images
-
-The following example searches for images and then checks collections, system packages and python packages manually before we run the ansible-builder command.
-
-```shell
-# Login to registry
-podman login registry.redhat.io
-# Search registry to find latest images
-# https://docs.podman.io/en/stable/markdown/podman-search.1.html
-podman search ansible-automation-platform-24
-
-# Pull image and start container
-podman run -it --rm registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel9:latest /bin/bash
-
-# Check dependencies for collections
-ansible-galaxy collection install -r requirements.yml
-cd /home/runner/.ansible/collections/ansible_collections/
-grep -R python39 * | grep bindep.txt
-grep -R suds *
-# Look at potential newer versions of the collections
-ansible-galaxy collection install --upgrade -r requirements.yml
-
-# Install windows packages
-microdnf install krb5-libs krb5-workstation krb5-devel
-# Install Python 3.8 developer tools
-microdnf install vi git rsync unzip tar sudo gcc openssl openssl-devel gcc-c++ dnf libpq-devel python38-devel glibc-headers libcurl-devel libssh-devel jq python3-Cython python3-devel openldap-devel
-# Install Python 3.9 developer tools
-microdnf install vi git rsync unzip tar sudo gcc openssl openssl-devel gcc-c++ dnf libpq-devel python39-devel glibc-headers libcurl-devel libssh-devel jq python3-Cython python3-devel openldap-devel
-# Test the installation of required python libraries
-pip3 install -r requirements.txt
 ```
 
 ## Tools
