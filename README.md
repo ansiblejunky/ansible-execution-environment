@@ -2,6 +2,12 @@
 
 Example repository to build Ansible Execution Environments using a Makefile.
 
+## Documentation
+
+- [Bootstrap Environment Guide](docs/bootstrap-guide.md) - Setup and configuration guide
+- [Architecture Decision Records](docs/adrs/)
+  - [ADR-0006: Authentication Flow and Token Handling](docs/adrs/0006-authentication-flow-and-token-handling.md)
+
 TODO: Update docs to leverage new PIP_INDEX_URL environment variable option
 https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies-ansible-execution-environments#python_dependency_management
 
