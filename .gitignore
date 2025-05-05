@@ -1,4 +1,68 @@
+# Environment variables and secrets
+.env
+*.env
+*.token
+*.key
+*.pem
+*.crt
+*.p12
+
+# Temporary files
 *.log
+*.temp
+*.tmp
+temp/
+.cache/
+.ansible/
+ansible-navigator.log
+ansible-builder.log
+ansible-builder.bak.log
+doc-validation-report.md
+
+# Build artifacts
+context/
+collections/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor/IDE specific files
+.idea/
+.vscode/
+*~
+.*.swp
+.*.swo
+
 *.json
 context
 env.sh

@@ -1,6 +1,9 @@
 # Ansible Automation Platform - Makefile for Execution Environments
 # Original version found on ansiblejunky @ https://github.com/ansiblejunky/ansible-execution-environment
 
+# Try to include the .env file if it exists
+-include .env
+
 # Update defaults
 TARGET_TAG ?= v5
 CONTAINER_ENGINE ?= podman
@@ -13,8 +16,20 @@ TARGET_HUB ?= quay.io
 TARGET_NAME ?= ansible-ee-minimal
 
 
-.PHONY : header clean lint check build scan test publish list shell
+.PHONY : header clean lint check build scan test publish list shell env
 all: header clean lint build test publish
+
+env: # Display current environment variable settings
+	@echo "\n\n***************************** Environment Variables \n"
+	@echo "CONTAINER_ENGINE: $(CONTAINER_ENGINE)"
+	@echo "TARGET_TAG: $(TARGET_TAG)"
+	@echo "TARGET_NAME: $(TARGET_NAME)"
+	@echo "TARGET_HUB: $(TARGET_HUB)"
+	@echo "SOURCE_HUB: $(SOURCE_HUB)"
+	@echo "ANSIBLE_HUB_TOKEN: $${ANSIBLE_HUB_TOKEN:+<set>}"
+	@echo "PIP_INDEX_URL: $${PIP_INDEX_URL:-not set}"
+	@echo "AAP_URL: $${AAP_URL:-not set}"
+	@echo "\nCreate/edit .env file to change these settings permanently"
 
 header:
 	@echo "\n\n***************************** Ansible Automation Platform - Makefile for Execution Environments \n"

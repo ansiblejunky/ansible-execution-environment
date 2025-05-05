@@ -12,9 +12,16 @@ https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies
 - Clone this repository
 - Customize
   - Edit dependencies `requirements.yml`, `requirements.txt`, `bindep.txt`
-  - Set token environment variable `ANSIBLE_HUB_TOKEN`
+  - Set up environment variables using the provided template:
+    ```bash
+    cp .env-example .env
+    # Edit the .env file with your specific values
+    vim .env
+    ```
+  - Or set token environment variable manually: `export ANSIBLE_HUB_TOKEN=your-token-here`
   - Edit `execution-environment.yml` accordingly
-  - Edit `Makefile` variables
+  - Edit `Makefile` variables if needed (though .env is preferred)
+- Check your environment settings with `make env`
 - Cleanup with `make clean`
 - Test token with `make token`
 - Build it `make build`
@@ -73,6 +80,29 @@ ansible-navigator run playbook.yml --container-engine podman --execution-environ
 # Check configuration of new image
 ansible-navigator config --container-engine podman --execution-environment-image ansible-ee:5.0
 ```
+
+### Container-Based Testing
+
+If your environment doesn't have all required tools installed, you can use our container-based testing scripts:
+
+```shell
+# Basic testing without AAP requirements
+./files/container-test.sh
+
+# Testing with AAP integration
+./files/test-aap-integration.sh
+```
+
+These scripts:
+1. Create temporary test playbooks
+2. Pull a container image with all required tools
+3. Run the tests inside the container
+4. Report the results
+5. Clean up temporary files
+
+This approach ensures consistent testing even when your host system doesn't have all prerequisites installed.
+
+> **Note**: Red Hat execution environments use `pip3` instead of `pip` for Python package management. Our testing scripts are configured to work with this difference.
 
 ## Tips and Tricks
 
