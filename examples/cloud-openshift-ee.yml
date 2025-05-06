@@ -1,0 +1,76 @@
+# OpenShift Automation Environment Configuration
+# Use this when you need tools for OpenShift/Kubernetes automation
+
+base_image:
+  name: "registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel9:latest"
+  auth:
+    enabled: true
+    username: "${EE_REGISTRY_USERNAME}"
+    password: "${EE_REGISTRY_PASSWORD}"
+
+package_manager:
+  path: "/usr/bin/microdnf"
+  options: "--nodocs --setopt install_weak_deps=0"
+  repositories:
+    rhocp-4.14-for-rhel-9-aarch64-rpms: true  # For OpenShift CLI tools
+    hashicorp: true  # For Terraform
+
+dependencies:
+  galaxy:
+    file: "files/openshift-requirements.yml"  # Contains OpenShift collections
+    options: "--ignore-certs"
+  python:
+    file: "files/openshift-requirements.txt"  # Contains openshift and kubernetes packages
+    upgrade_pip: true
+  system:
+    file: "files/openshift-bindep.txt"
+
+build_files:
+  - src: "ansible.cfg"
+    dest: "configs"
+    required: true
+    description: "Ansible configuration file"
+  - src: "files/openshift/kubeconfig"
+    dest: "configs/.kube/"
+    required: false
+    description: "OpenShift/Kubernetes configuration template"
+
+# Enable OpenShift/Kubernetes related tools
+tools:
+  azure_cli:
+    enabled: false
+  packer:
+    enabled: false
+  openscap:
+    enabled: true  # Useful for container security scanning
+  openshift_cli:
+    enabled: true
+    version: "latest"
+  helm:
+    enabled: true
+    version: "latest"
+  terraform:
+    enabled: true
+    version: "latest"
+
+build_steps:
+  prepend_base:
+    system_info: true
+    environment_check: true
+    custom_steps:
+      # Install OpenShift CLI
+      - RUN $PKGMGR install -y openshift-clients
+      # Install Helm
+      - RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      # Install OpenShift Terraform provider dependencies
+      - RUN $PKGMGR install -y jq yq
+      # Install additional container tools
+      - RUN $PKGMGR install -y podman skopeo buildah
+
+  prepend_galaxy:
+    copy_ansible_config: true
+    copy_kube_config: true
+
+  append_final:
+    verify_dependencies: true
+    cleanup_cache: true 

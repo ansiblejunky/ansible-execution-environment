@@ -1,0 +1,53 @@
+# Cloud Automation Execution Environment Configuration
+# Use this when you need tools for cloud infrastructure automation
+
+base_image:
+  name: "registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel9:latest"
+  auth:
+    enabled: true
+    username: "${EE_REGISTRY_USERNAME}"
+    password: "${EE_REGISTRY_PASSWORD}"
+
+package_manager:
+  path: "/usr/bin/microdnf"
+  options: "--nodocs --setopt install_weak_deps=0"
+  repositories:
+    hashicorp: true  # For Packer and other HashiCorp tools
+
+dependencies:
+  galaxy:
+    file: "files/cloud-requirements.yml"
+    options: "--ignore-certs"
+  python:
+    file: "files/cloud-requirements.txt"
+    upgrade_pip: true
+  system:
+    file: "files/cloud-bindep.txt"
+
+build_files:
+  - src: "ansible.cfg"
+    dest: "configs"
+    required: true
+    description: "Ansible configuration file"
+
+# Enable cloud-related tools
+tools:
+  azure_cli:
+    enabled: true
+    version: "latest"
+  packer:
+    enabled: true
+    version: "latest"
+  openscap:
+    enabled: false  # Not needed for cloud automation
+
+build_steps:
+  prepend_base:
+    system_info: true
+    environment_check: true
+  prepend_galaxy:
+    copy_ansible_config: true
+    copy_kerberos_config: false
+  append_final:
+    verify_dependencies: true
+    cleanup_cache: true 

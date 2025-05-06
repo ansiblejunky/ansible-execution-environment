@@ -1,0 +1,49 @@
+# Minimal Execution Environment Configuration
+# Use this when you need a basic environment with minimal tools and dependencies
+
+base_image:
+  # Using the free UBI minimal image
+  name: "registry.access.redhat.com/ubi9/ubi-minimal:latest"
+  auth:
+    enabled: false
+
+package_manager:
+  path: "/usr/bin/microdnf"
+  options: "--nodocs --setopt install_weak_deps=0"
+  repositories: {}  # No additional repos needed
+
+dependencies:
+  galaxy:
+    file: "files/minimal-requirements.yml"
+    options: "--ignore-certs"
+  python:
+    file: "files/minimal-requirements.txt"
+    upgrade_pip: true
+  system:
+    file: "files/minimal-bindep.txt"
+
+build_files:
+  - src: "ansible.cfg"
+    dest: "configs"
+    required: true
+    description: "Ansible configuration file"
+
+# Disable all optional tools
+tools:
+  azure_cli:
+    enabled: false
+  packer:
+    enabled: false
+  openscap:
+    enabled: false
+
+build_steps:
+  prepend_base:
+    system_info: false
+    environment_check: false
+  prepend_galaxy:
+    copy_ansible_config: true
+    copy_kerberos_config: false
+  append_final:
+    verify_dependencies: true
+    cleanup_cache: true 

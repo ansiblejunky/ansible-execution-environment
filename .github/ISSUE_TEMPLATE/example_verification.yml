@@ -1,0 +1,98 @@
+name: Example Verification
+description: Submit a verification for an execution environment example
+title: "verify: <example-name>"
+labels: ["verification", "community"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to verify one of our execution environment examples! 
+        This helps ensure our examples remain up-to-date and working for everyone.
+  
+  - type: input
+    id: example-file
+    attributes:
+      label: Example File
+      description: Which example file are you verifying?
+      placeholder: "examples/openshift-ai-ee.yml"
+    validations:
+      required: true
+
+  - type: input
+    id: environment-version
+    attributes:
+      label: Environment Version
+      description: What version of OpenShift/Platform are you testing with?
+      placeholder: "OpenShift 4.14.3"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: verification-status
+    attributes:
+      label: Verification Status
+      description: What is the result of your verification?
+      options:
+        - "✅ Verified - Everything works as expected"
+        - "⚠️ Partial - Works with some limitations"
+        - "❌ Failed - Major issues found"
+    validations:
+      required: true
+
+  - type: textarea
+    id: test-steps
+    attributes:
+      label: Test Steps
+      description: What steps did you take to verify the example?
+      placeholder: |
+        1. Built the execution environment using...
+        2. Tested functionality X by...
+        3. Verified integration with...
+    validations:
+      required: true
+
+  - type: textarea
+    id: limitations
+    attributes:
+      label: Limitations or Issues
+      description: Did you encounter any limitations or issues?
+      placeholder: |
+        - Package X needs to be manually installed
+        - Feature Y only works with version Z
+        - Warning messages about...
+
+  - type: textarea
+    id: verification-evidence
+    attributes:
+      label: Verification Evidence
+      description: Please provide any relevant logs, screenshots, or output that demonstrates successful verification
+      placeholder: |
+        ```
+        Build output...
+        Test results...
+        ```
+
+  - type: checkboxes
+    id: verification-checklist
+    attributes:
+      label: Verification Checklist
+      description: Please confirm you have completed these verification steps
+      options:
+        - label: Built the execution environment successfully
+          required: true
+        - label: Tested all major functionality described in the example
+          required: true
+        - label: Documented any workarounds or limitations
+          required: true
+        - label: Updated the example's verification header
+          required: true
+        - label: Created a PR to update the verification status
+          required: true
+
+  - type: textarea
+    id: additional-notes
+    attributes:
+      label: Additional Notes
+      description: Any other comments or suggestions?
+      placeholder: "Additional context, improvement suggestions, etc." 

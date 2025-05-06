@@ -1,0 +1,72 @@
+# AWS Cloud Automation Environment Configuration
+# Use this when you need tools for AWS cloud infrastructure automation
+
+base_image:
+  name: "registry.access.redhat.com/ubi9/ubi-minimal:latest"  # Using UBI minimal for smaller size
+  auth:
+    enabled: false  # UBI images are freely available
+
+package_manager:
+  path: "/usr/bin/microdnf"
+  options: "--nodocs --setopt install_weak_deps=0"
+  repositories:
+    hashicorp: true  # For Packer and Terraform
+
+dependencies:
+  galaxy:
+    file: "files/aws-requirements.yml"  # Contains AWS collections
+    options: "--ignore-certs"
+  python:
+    file: "files/aws-requirements.txt"  # Contains boto3 and AWS SDK
+    upgrade_pip: true
+  system:
+    file: "files/aws-bindep.txt"
+
+build_files:
+  - src: "ansible.cfg"
+    dest: "configs"
+    required: true
+    description: "Ansible configuration file"
+  - src: "files/aws/credentials"
+    dest: "configs/.aws/"
+    required: false
+    description: "AWS credentials template"
+
+# Enable AWS-related tools
+tools:
+  azure_cli:
+    enabled: false
+  packer:
+    enabled: true
+    version: "latest"
+  openscap:
+    enabled: false
+  aws_cli:
+    enabled: true
+    version: "2"  # AWS CLI v2
+  terraform:
+    enabled: true
+    version: "latest"
+
+build_steps:
+  prepend_base:
+    system_info: true
+    environment_check: true
+    custom_steps:
+      # Install AWS CLI v2
+      - RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" &&
+          unzip awscliv2.zip &&
+          ./aws/install &&
+          rm -rf aws awscliv2.zip
+      # Install AWS Session Manager plugin
+      - RUN curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm" -o "session-manager-plugin.rpm" &&
+          $PKGMGR install -y session-manager-plugin.rpm &&
+          rm session-manager-plugin.rpm
+
+  prepend_galaxy:
+    copy_ansible_config: true
+    copy_aws_config: true
+
+  append_final:
+    verify_dependencies: true
+    cleanup_cache: true 

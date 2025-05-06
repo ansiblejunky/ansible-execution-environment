@@ -1,0 +1,56 @@
+# Security-Focused Execution Environment Configuration
+# Use this when you need tools for security scanning and compliance
+
+base_image:
+  name: "registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel9:latest"
+  auth:
+    enabled: true
+    username: "${EE_REGISTRY_USERNAME}"
+    password: "${EE_REGISTRY_PASSWORD}"
+
+package_manager:
+  path: "/usr/bin/microdnf"
+  options: "--nodocs --setopt install_weak_deps=0"
+  repositories:
+    rhocp-4.14-for-rhel-9-aarch64-rpms: true  # For OpenSCAP and security tools
+
+dependencies:
+  galaxy:
+    file: "files/security-requirements.yml"
+    options: "--ignore-certs"
+  python:
+    file: "files/security-requirements.txt"
+    upgrade_pip: true
+  system:
+    file: "files/security-bindep.txt"
+
+build_files:
+  - src: "ansible.cfg"
+    dest: "configs"
+    required: true
+    description: "Ansible configuration file"
+  - src: "files/krb5.conf"
+    dest: "configs"
+    required: true
+    description: "Kerberos configuration for Windows authentication"
+
+# Enable security-related tools
+tools:
+  azure_cli:
+    enabled: false  # Not needed for security scanning
+  packer:
+    enabled: false  # Not needed for security scanning
+  openscap:
+    enabled: true
+    version: "latest"
+
+build_steps:
+  prepend_base:
+    system_info: true
+    environment_check: true
+  prepend_galaxy:
+    copy_ansible_config: true
+    copy_kerberos_config: true
+  append_final:
+    verify_dependencies: true
+    cleanup_cache: true 

@@ -1,0 +1,78 @@
+# Google Cloud Platform Automation Environment Configuration
+# Use this when you need tools for GCP cloud infrastructure automation
+
+base_image:
+  name: "registry.access.redhat.com/ubi9/ubi-minimal:latest"  # Using UBI minimal for smaller size
+  auth:
+    enabled: false  # UBI images are freely available
+
+package_manager:
+  path: "/usr/bin/microdnf"
+  options: "--nodocs --setopt install_weak_deps=0"
+  repositories:
+    hashicorp: true  # For Packer and Terraform
+    google-cloud-sdk: true  # For GCP SDK
+
+dependencies:
+  galaxy:
+    file: "files/gcp-requirements.yml"  # Contains GCP collections
+    options: "--ignore-certs"
+  python:
+    file: "files/gcp-requirements.txt"  # Contains google-auth and GCP SDK
+    upgrade_pip: true
+  system:
+    file: "files/gcp-bindep.txt"
+
+build_files:
+  - src: "ansible.cfg"
+    dest: "configs"
+    required: true
+    description: "Ansible configuration file"
+  - src: "files/gcp/credentials.json"
+    dest: "configs/.gcp/"
+    required: false
+    description: "GCP service account credentials template"
+
+# Enable GCP-related tools
+tools:
+  azure_cli:
+    enabled: false
+  packer:
+    enabled: true
+    version: "latest"
+  openscap:
+    enabled: false
+  gcloud:
+    enabled: true
+    version: "latest"
+    components:
+      - gke-gcloud-auth-plugin
+      - kubectl
+      - docker-credential-gcr
+  terraform:
+    enabled: true
+    version: "latest"
+
+build_steps:
+  prepend_base:
+    system_info: true
+    environment_check: true
+    custom_steps:
+      # Install Google Cloud SDK repository
+      - RUN curl https://packages.cloud.google.com/yum/doc/yum-key.gpg | tee /etc/yum.repos.d/google-cloud-sdk.gpg &&
+          curl https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg | tee /etc/yum.repos.d/google-cloud-sdk-rpm-package-key.gpg &&
+          $PKGMGR install -y google-cloud-sdk
+      # Install additional GCP components
+      - RUN gcloud components install gke-gcloud-auth-plugin kubectl docker-credential-gcr --quiet
+      # Install Cloud SQL Proxy
+      - RUN curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 &&
+          chmod +x cloud_sql_proxy &&
+          mv cloud_sql_proxy /usr/local/bin/
+
+  prepend_galaxy:
+    copy_ansible_config: true
+    copy_gcp_config: true
+
+  append_final:
+    verify_dependencies: true
+    cleanup_cache: true 

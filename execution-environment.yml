@@ -1,72 +1,96 @@
 ---
 version: 3
 
+# This is a template execution environment configuration.
+# Copy this file and ee-variables.yml to start customizing your environment.
+# See examples/ directory for different configuration examples.
+
 build_arg_defaults:
-  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: '--ignore-certs'
+  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: "{{ dependencies.galaxy.options }}"
 
 dependencies:
-  galaxy: files/requirements.yml
-  python: files/requirements.txt
-  system: files/bindep.txt
+  galaxy: "{{ dependencies.galaxy.file }}"
+  python: "{{ dependencies.python.file }}"
+  system: "{{ dependencies.system.file }}"
 
 images:
   base_image:
-    name: 'registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel9:latest'
+    name: "{{ base_image.name }}"
 
 options:
-  package_manager_path: /usr/bin/microdnf
+  package_manager_path: "{{ package_manager.path }}"
 
 additional_build_files:
-  # Ansible Galaxy - critical for ansible-galaxy to work
-  - src: ansible.cfg
-    dest: configs
-  # (Optional) Windows Authentication - Kerberos
-  - src: files/krb5.conf
-    dest: configs
+  # Only include files that are marked as required or enabled
+  {% for file in build_files %}
+  {% if file.required or file.enabled | default(false) %}
+  - src: "{{ file.src }}"
+    dest: "{{ file.dest }}"
+  {% endif %}
+  {% endfor %}
 
 additional_build_steps:
   prepend_base:
+    {% if build_steps.prepend_base.system_info %}
     - RUN whoami
     - RUN cat /etc/os-release
+    {% endif %}
+    {% if build_steps.prepend_base.environment_check %}
     - RUN echo PKGMGR = $PKGMGR, PYCMD = $PYCMD
+    {% endif %}
 
-    # Upgrade pip to use improved dependency resolver
+    {% if dependencies.python.upgrade_pip %}
     - RUN $PYCMD -m pip install --upgrade pip
+    {% endif %}
 
-    # Install Red Hat OpenShift client tools by enabling repo (prepare with manual steps below)
-    # https://access.redhat.com/solutions/6985157
-    # https://docs.openshift.com/container-platform/4.13/cli_reference/openshift_cli/getting-started-cli.html#cli-installing-cli-rpm_cli-developer-commands
-    # subscription-manager attach --pool=`subscription-manager list --available --matches '*OpenShift*' | grep "Pool ID" | awk '{print $3}'`
-    # subscription-manager repos --list | grep rhocp-4.14
-    # (not needed) subscription-manager repos --enable="rhocp-4.12-for-rhel-9-x86_64-rpms"
-    - ENV PKGMGR_OPTS "--nodocs --setopt install_weak_deps=0 --enablerepo=rhocp-4.14-for-rhel-9-aarch64-rpms"
+    # Configure package manager options
+    - ENV PKGMGR_OPTS "{{ package_manager.options }}"
 
-    # Install Microsoft azure-cli command line tool (needs dnf to install from url)
-    # https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf
+    {% for repo_name, enabled in package_manager.repositories.items() %}
+    {% if enabled %}
+    {% if repo_name == 'hashicorp' %}
+    # Install HashiCorp repository
+    - RUN curl https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo --output /etc/yum.repos.d/hashicorp.repo
+    {% endif %}
+    {% endif %}
+    {% endfor %}
+
+    {% if tools.azure_cli.enabled %}
+    # Install Azure CLI
     - >
       RUN $PKGMGR install -y dnf &&
       rpm --import https://packages.microsoft.com/keys/microsoft.asc &&
       dnf -y install -y https://packages.microsoft.com/config/rhel/9.0/packages-microsoft-prod.rpm &&
       $PKGMGR -y install azure-cli
-    # Install HashiCorp Packer (/usr/bin/packer)
-    - >
-      RUN curl https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo --output /etc/yum.repos.d/hashicorp.repo &&
-      $PKGMGR -y install packer
-    # Install Red Hat open-scap command line tool to run security scans on target systems and generate reports
+    {% endif %}
+
+    {% if tools.packer.enabled %}
+    # Install HashiCorp Packer
+    - RUN $PKGMGR -y install packer{% if tools.packer.version != 'latest' %}={{ tools.packer.version }}{% endif %}
+    {% endif %}
+
+    {% if tools.openscap.enabled %}
+    # Install OpenSCAP scanner
     - RUN $PKGMGR -y install openscap-scanner
+    {% endif %}
+
   prepend_galaxy:
-      # Ansible Galaxy - critical for ansible-galaxy to work
+    {% if build_steps.prepend_galaxy.copy_ansible_config %}
     - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
-    # (Optional) Windows Authentication - Kerberos
+    {% endif %}
+    {% if build_steps.prepend_galaxy.copy_kerberos_config %}
     - COPY _build/configs/krb5.conf /etc/krb5.conf
+    {% endif %}
+
   append_final:
-    # Verify installed packages have compatible dependencies
-    # Logged issue https://github.com/ansible/ansible-builder/issues/416
+    {% if build_steps.append_final.verify_dependencies %}
     - RUN pip3 check
-    # Clean up
+    {% endif %}
+    {% if build_steps.append_final.cleanup_cache %}
     - >
       RUN $PKGMGR update -y &&
       $PKGMGR clean all &&
       rm -rf /var/cache/{dnf,yum} &&
       rm -rf /var/lib/dnf/history.* &&
       rm -rf /var/log/*
+    {% endif %}
