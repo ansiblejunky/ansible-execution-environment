@@ -1,0 +1,92 @@
+# AWS Cloud Environment Configuration
+# Use this when you need tools for AWS cloud automation and infrastructure management
+#
+# Last Verified:
+#   Date: Not verified yet
+#   Version: 0.1.0
+#   Verified By: None
+#   AWS CLI Version: Target 2.15.0
+#   Status: ⚠️ Needs Verification
+#   Notes: Initial example awaiting verification by @tsakinosho
+
+base_image:
+  name: "registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel9:latest"
+  auth:
+    enabled: true
+    username: "${EE_REGISTRY_USERNAME}"
+    password: "${EE_REGISTRY_PASSWORD}"
+
+package_manager:
+  path: "/usr/bin/microdnf"
+  options: "--nodocs --setopt install_weak_deps=0"
+  repositories:
+    epel: true  # For additional AWS tools
+
+dependencies:
+  galaxy:
+    file: "files/aws-requirements.yml"  # Contains AWS collections
+    options: "--ignore-certs"
+  python:
+    file: "files/aws-requirements.txt"  # Contains AWS SDKs and tools
+    upgrade_pip: true
+  system:
+    file: "files/aws-bindep.txt"
+
+build_files:
+  - src: "ansible.cfg"
+    dest: "configs"
+    required: true
+    description: "Ansible configuration file"
+  - src: "files/aws/credentials"
+    dest: "configs/.aws/"
+    required: false
+    description: "AWS credentials template"
+  - src: "files/aws/config"
+    dest: "configs/.aws/"
+    required: false
+    description: "AWS configuration template"
+
+# Enable AWS related tools
+tools:
+  aws_cli:
+    enabled: true
+    version: "2.15.0"
+  aws_session_manager:
+    enabled: true
+    version: "latest"
+  terraform:
+    enabled: true
+    version: "latest"
+  aws_tools:
+    enabled: true
+    components:
+      - aws-sam-cli
+      - aws-cloudformation-cli
+      - aws-eks-cli
+
+build_steps:
+  prepend_base:
+    system_info: true
+    environment_check: true
+    custom_steps:
+      # Install AWS CLI
+      - RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+            unzip awscliv2.zip && \
+            ./aws/install && \
+            rm -rf aws awscliv2.zip
+      # Install Session Manager plugin
+      - RUN curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm" -o "session-manager-plugin.rpm" && \
+            $PKGMGR install -y ./session-manager-plugin.rpm && \
+            rm session-manager-plugin.rpm
+      # Install additional AWS tools
+      - RUN $PKGMGR install -y python3-pip python3-devel
+      # Install Terraform
+      - RUN $PKGMGR install -y terraform
+
+  prepend_galaxy:
+    copy_ansible_config: true
+    copy_aws_config: true
+
+  append_final:
+    verify_dependencies: true
+    cleanup_cache: true 
