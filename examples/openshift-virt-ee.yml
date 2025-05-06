@@ -1,0 +1,95 @@
+# OpenShift Virtualization Environment Configuration
+# Use this when you need tools for managing virtual machines on OpenShift
+#
+# Last Verified:
+#   Date: Not verified yet
+#   Version: 0.1.0
+#   Verified By: None
+#   OpenShift Version: 4.14 (Target)
+#   Status: ⚠️ Needs Verification
+#   Notes: Initial example awaiting community verification
+
+base_image:
+  name: "registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel9:latest"
+  auth:
+    enabled: true
+    username: "${EE_REGISTRY_USERNAME}"
+    password: "${EE_REGISTRY_PASSWORD}"
+
+package_manager:
+  path: "/usr/bin/microdnf"
+  options: "--nodocs --setopt install_weak_deps=0"
+  repositories:
+    rhocp-4.14-for-rhel-9-aarch64-rpms: true  # For OpenShift CLI tools
+    hashicorp: true  # For Terraform provider
+
+dependencies:
+  galaxy:
+    file: "files/virt-requirements.yml"  # Contains virtualization collections
+    options: "--ignore-certs"
+  python:
+    file: "files/virt-requirements.txt"  # Contains virtualization libraries
+    upgrade_pip: true
+  system:
+    file: "files/virt-bindep.txt"
+
+build_files:
+  - src: "ansible.cfg"
+    dest: "configs"
+    required: true
+    description: "Ansible configuration file"
+  - src: "files/openshift/kubeconfig"
+    dest: "configs/.kube/"
+    required: false
+    description: "OpenShift/Kubernetes configuration template"
+  - src: "files/virt/migration-templates"
+    dest: "configs/virt/"
+    required: false
+    description: "VM migration templates"
+
+# Enable virtualization related tools
+tools:
+  openshift_cli:
+    enabled: true
+    version: "latest"
+  openshift_virt:
+    enabled: true
+    version: "latest"
+    components:
+      - migration-toolkit
+      - vm-import-operator
+      - vm-snapshot-operator
+  libvirt:
+    enabled: true
+    version: "latest"
+  terraform:
+    enabled: true
+    version: "latest"
+  openscap:
+    enabled: true  # For VM security scanning
+    version: "latest"
+
+build_steps:
+  prepend_base:
+    system_info: true
+    environment_check: true
+    custom_steps:
+      # Install OpenShift CLI and virtualization tools
+      - RUN $PKGMGR install -y openshift-clients
+      # Install libvirt and virtualization tools
+      - RUN $PKGMGR install -y libvirt-client virt-viewer
+      # Install migration toolkit dependencies
+      - RUN $PKGMGR install -y qemu-img libguestfs-tools
+      # Install container tools for VM image handling
+      - RUN $PKGMGR install -y podman skopeo buildah
+      # Install additional utilities
+      - RUN $PKGMGR install -y jq yq
+
+  prepend_galaxy:
+    copy_ansible_config: true
+    copy_kube_config: true
+    copy_virt_templates: true
+
+  append_final:
+    verify_dependencies: true
+    cleanup_cache: true 

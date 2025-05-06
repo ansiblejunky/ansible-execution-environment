@@ -1,0 +1,95 @@
+# OpenShift AI Environment Configuration
+# Use this when you need tools for AI/ML workloads on OpenShift
+#
+# Last Verified:
+#   Date: Not verified yet
+#   Version: 0.1.0
+#   Verified By: None
+#   OpenShift Version: 4.14 (Target)
+#   Status: ⚠️ Needs Verification
+#   Notes: Initial example awaiting community verification
+
+base_image:
+  name: "registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel9:latest"
+  auth:
+    enabled: true
+    username: "${EE_REGISTRY_USERNAME}"
+    password: "${EE_REGISTRY_PASSWORD}"
+
+package_manager:
+  path: "/usr/bin/microdnf"
+  options: "--nodocs --setopt install_weak_deps=0"
+  repositories:
+    rhocp-4.14-for-rhel-9-aarch64-rpms: true  # For OpenShift CLI tools
+    nvidia: true  # For GPU support tools
+
+dependencies:
+  galaxy:
+    file: "files/ai-requirements.yml"  # Contains OpenShift AI collections
+    options: "--ignore-certs"
+  python:
+    file: "files/ai-requirements.txt"  # Contains ML libraries and SDKs
+    upgrade_pip: true
+  system:
+    file: "files/ai-bindep.txt"
+
+build_files:
+  - src: "ansible.cfg"
+    dest: "configs"
+    required: true
+    description: "Ansible configuration file"
+  - src: "files/openshift/kubeconfig"
+    dest: "configs/.kube/"
+    required: false
+    description: "OpenShift/Kubernetes configuration template"
+  - src: "files/ai/model-serving-config"
+    dest: "configs/model-serving/"
+    required: false
+    description: "Model serving configuration templates"
+
+# Enable AI/ML related tools
+tools:
+  openshift_cli:
+    enabled: true
+    version: "latest"
+  openshift_ai:
+    enabled: true
+    version: "latest"
+    components:
+      - model-mesh
+      - data-science-pipelines
+      - model-monitoring
+  nvidia_tools:
+    enabled: true
+    version: "latest"
+  kubeflow:
+    enabled: true
+    version: "latest"
+  helm:
+    enabled: true
+    version: "latest"
+
+build_steps:
+  prepend_base:
+    system_info: true
+    environment_check: true
+    custom_steps:
+      # Install OpenShift CLI and AI tools
+      - RUN $PKGMGR install -y openshift-clients
+      # Install NVIDIA GPU operator dependencies
+      - RUN $PKGMGR install -y nvidia-container-toolkit
+      # Install ML tools and libraries
+      - RUN $PKGMGR install -y python3-pip python3-devel
+      # Install Helm for managing AI/ML operators
+      - RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      # Install additional tools for model management
+      - RUN $PKGMGR install -y git-lfs
+
+  prepend_galaxy:
+    copy_ansible_config: true
+    copy_kube_config: true
+    copy_model_serving_config: true
+
+  append_final:
+    verify_dependencies: true
+    cleanup_cache: true 
