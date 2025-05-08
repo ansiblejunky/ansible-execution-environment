@@ -19,11 +19,11 @@ unzip [platform:rpm]
 tar   [platform:rpm]
 sudo  [platform:rpm]
 
-# Windows Authentication - Kerberos
+# (Optional) Windows Authentication - Kerberos
 # https://docs.ansible.com/automation-controller/latest/html/administration/kerberos_auth.html
-krb5-libs [platform:rpm]
-krb5-workstation [platform:rpm]
-krb5-devel [platform:rpm]
+# krb5-libs [platform:rpm]
+# krb5-workstation [platform:rpm]
+# krb5-devel [platform:rpm]
 
 # Dependencies for pycurl and python-ldap
 libcurl-devel [platform:rpm]

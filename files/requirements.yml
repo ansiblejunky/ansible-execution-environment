@@ -8,134 +8,38 @@
 # https://access.redhat.com/support/articles/ansible-automation-platform-certified-content
 
 collections:
-  # Ansible Automation Platform
-  # -------------------------------------------------------------------
-  - name: redhat_cop.aap_utilities # requires ansible-posix and kubernetes-core collections
-    version: 2.2.4
-  - name: redhat_cop.ah_configuration
-    version: 1.1.1
-  - name: redhat_cop.controller_configuration
-    version: 2.3.1
-  # - name: ansible.scm # git_publish, git_retrieve modules https://github.com/ansible-collections/ansible.scm
-  #   version: v1.1.0
-
-  # Platforms
-  # -------------------------------------------------------------------
-  - name: amazon.aws
-    version: 5.4.0
-  - name: azure.azcollection
-    version: 1.16.0
-  - name: community.vmware
-    version: 3.8.0
-  - name: vmware.vmware_rest
-    version: 2.3.1
-  - name: kubernetes.core # requires openshift-clients package using rhel server
-    version: 2.4.0
-  - name: redhat.openshift # certified collection
-    version: 2.3.0
-
-  # Virtualization
-  # -------------------------------------------------------------------
-  # oVirt Ansible Collection https://github.com/ovirt/ovirt-ansible-collection
-  #- name: redhat.rhv # requires building from rhel server to install dependencies
-  #  version: 1.4.4
-
+  - name: redhat_cop.aap_utilities # aap
+  - name: infra.aap_configuration # aap
+  - name: ansible.platform # aap
+  - name: ansible.hub # aap
+  - name: ansible.controller # aap
+  - name: ansible.eda # aap
+  - name: amazon.aws # cloud
+  - name: azure.azcollection # cloud
+  # - name: community.vmware # vmware
+  # - name: vmware.vmware_rest # vmware
+  - name: kubernetes.core # containers
+  - name: redhat.openshift # containers
   # https://opendev.org/openstack/ansible-collections-openstack
   # https://storyboard.openstack.org/#!/dashboard/stories
   # Issue with bindep.txt https://storyboard.openstack.org/#!/story/2010889
-  - name: openstack.cloud
-
-  # Server Management
-  # -------------------------------------------------------------------
-  - name: community.general
-    version: 7.2.1
-  - name: community.windows
-    version: 2.0.0
-  - name: ansible.windows # certified collection
-    version: 2.0.0
-  - name: ansible.utils
-    version: 2.10.3
-
-  # Network Automation
-  # -------------------------------------------------------------------
-  # Ansible Network Automation common content https://galaxy.ansible.com/ansible/netcommon
-  - name: ansible.netcommon
-    version: 5.1.2
-  # Ansible Network Automation community modules https://galaxy.ansible.com/community/network
-  - name: community.network
-    version: 5.0.0
-  # Ansible Collection targeting POSIX and POSIX-ish platforms.
-  - name: ansible.posix
-    version: 1.5.4
-
-  - name: cisco.asa
-    version: 2.1.0
-  - name: cisco.ios
-    version: 2.5.0
-  - name: cisco.iosxr
-    version: 2.5.0
-  - name: cisco.nxos
-    version: 2.7.1
-
-  # Infoblox NIOS https://galaxy.ansible.com/infoblox/nios_modules
-  - name: infoblox.nios_modules
-    version: 1.5.0
-  #- name: f5networks.f5_bigip
-  #  version: 3.1.0
-  #- name: f5networks.f5_modules
-  #  version: 1.25.1
-  #- name: paloaltonetworks.panos
-  #  version: 2.17.3
-
-  # Open vSwitch https://galaxy.ansible.com/openvswitch/openvswitch
-  #- name: openvswitch.openvswitch
-  #  version: 2.1.1
-  # Netbox network modeling https://galaxy.ansible.com/netbox/netbox
-  # - name: netbox.netbox
-  #   version: 3.13.0
-
-  # Monitoring
-  # -------------------------------------------------------------------
-  # - name: dynatrace_innovationlab.dynatrace_collection
-  #   version: 1.0.6
-
-  # Security Automation
-  # -------------------------------------------------------------------
-  # The Ansible ansible.security collection is a meta collection that install all the following security supported content collections.
-  # - ansible.netcommon
-  # - ansible.utils
-  # - cisco.asa
-  # - ibm.qradar
-  # - splunk.es
-  # - trendmicro.deepsec
-  #- name: ansible.security
-  #  version: 1.1.0
-  #- name: dsglaser.cis_security
-  #  version: 1.5.4
-  #- name: redhat.insights
-  #  version: 1.0.8
-
-
-  # Ansible Cloud Common
-  # -------------------------------------------------------------------
-  # It uses the Turbo Module https://github.com/ansible-collections/cloud.common
-  # A cache sharing solution to speed up Ansible modules
-  #- name: cloud.common
-  #  version: 2.1.3
-
-  # Dynamic Inventory
-  # -------------------------------------------------------------------
-  #- name: redhat.satellite # certified collection
-  #  version: 3.12.0
-  #- name: servicenow.itsm # certified collection
-  #  version: 2.3.0
-
-  # Identity Management
-  # -------------------------------------------------------------------
-  #- name: redhat.rhel_idm # certified collection
-  #  version: 1.11.1
-
-  # Logging Aggregation
-  # -------------------------------------------------------------------
-  #- name: splunk.es
-  #  version: 2.1.0
+  # - name: openstack.cloud # openstack
+  - name: community.general # general
+  - name: ansible.utils # general
+  # - name: community.windows # windows
+  # - name: ansible.windows # windows
+  # - name: ansible.scm # git_publish, git_retrieve modules https://github.com/ansible-collections/ansible.scm
+  # - name: ansible.netcommon # networking
+  # - name: community.network # networking
+  # - name: ansible.posix # networking
+  # - name: cisco.asa # networking
+  # - name: cisco.ios # networking
+  # - name: cisco.iosxr # networking
+  # - name: cisco.nxos # networking
+  # - name: infoblox.nios_modules # networking
+  # - name: f5networks.f5_bigip # networking
+  # - name: f5networks.f5_modules # networking
+  # - name: paloaltonetworks.panos # networking
+  # - name: netbox.netbox # networking
+  # - name: ansible.security # security - https://github.com/ansible-collections/ansible.security
+  # - name: cloud.common # others; turbo module; cache sharing solution to speed up Ansible modules

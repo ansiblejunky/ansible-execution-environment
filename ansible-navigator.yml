@@ -1,48 +1,23 @@
 ---
+# NAME: Ansible Navigator Settings
+#   https://ansible.readthedocs.io/projects/navigator/settings/
+# SOURCE: Source of truth on this configuration is located here:
+#   https://github.com/ansiblejunky/ansible-project-template/blob/master/ansible-navigator.yml
+
 ansible-navigator:
-#   ansible:
-#     config: /tmp/ansible.cfg
-#   app: run
-#   collection-doc-cache-path: /tmp/cache.db
-#   cmdline: "--forks 15"
-#   editor:
-#     command: vim_from_setting
-#     console: False
-#   documentation:
-#     plugin:
-#       name: shell
-#       type: become
-  execution-environment:
-    container-engine: podman
-#     environment-variables:
-#       pass:
-#         - ONE
-#         - TWO
-#         - THREE
-#       set:
-#         KEY1: VALUE1
-#         KEY2: VALUE2
-#         KEY3: VALUE3
-#     image: test_image:latest
-#     pull-policy: never
-#   help-config: True
-#   help-doc: True
-#   help-inventory: True
-#   help-playbook: False
-#   inventories:
-#     - /tmp/test_inventory.yml
-#   inventory-columns:
-#     - ansible_network_os
-#     - ansible_network_cli_ssh_type
-#     - ansible_connection
   logging:
-#     append: False
     level: critical
-#     file: /tmp/log.txt
-#   mode: stdout
-#   osc4: False
-#   playbook: /tmp/test_playbook.yml
+    file: ./ansible-navigator.log
   playbook-artifact:
-    enable: False
-#     replay: /tmp/test_artifact.json
-#     save-as: /tmp/test_artifact.json
+    enable: false
+  execution-environment:
+    enabled: true
+    image: ansible-ee-minimal:latest
+    container-engine: auto
+    environment-variables:
+      pass:
+        - ANSIBLE_ADMIN_USER
+        - ANSIBLE_ADMIN_PASSWORD
+      set:
+        VAR1: value1
+  mode: stdout

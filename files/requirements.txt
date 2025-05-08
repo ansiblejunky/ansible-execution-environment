@@ -12,8 +12,8 @@
 # Reporting - ARA plugin: https://ara.recordsansible.org/blog/2021/12/23/recording-ansible-playbooks-from-awx-with-ara/
 ara
 
-# Windows automation - connectivity requirements https://docs.ansible.com/ansible/latest/user_guide/windows_winrm.html#what-is-winrm
-pywinrm>=0.3.0
+# (Optional) Windows automation - connectivity requirements https://docs.ansible.com/ansible/latest/user_guide/windows_winrm.html#what-is-winrm
+#pywinrm>=0.3.0
 
-# Database automation - Mongo requirements
+# (Optional) Database automation - Mongo requirements
 #pymongo
