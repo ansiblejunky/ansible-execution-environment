@@ -1,9 +1,9 @@
-# Configuration pulled from AAP > Content > Repositories > Published > Distributions
+# Configuration for Ansible Automation Hub
 
 [galaxy]
-server_list = rh-certified, validated, community
+server_list = published, validated, community
 
-[galaxy_server.rh-certified]
+[galaxy_server.published]
 url=https://console.redhat.com/api/automation-hub/content/published/
 auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
 token=$ANSIBLE_HUB_TOKEN
@@ -15,4 +15,3 @@ token=$ANSIBLE_HUB_TOKEN
 
 [galaxy_server.community]
 url=https://galaxy.ansible.com
-

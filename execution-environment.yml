@@ -42,7 +42,7 @@ additional_build_steps:
     # subscription-manager attach --pool=`subscription-manager list --available --matches '*OpenShift*' | grep "Pool ID" | awk '{print $3}'`
     # subscription-manager repos --list | grep rhocp-4.14
     # (not needed) subscription-manager repos --enable="rhocp-4.12-for-rhel-9-x86_64-rpms"
-    - ENV PKGMGR_OPTS "--nodocs --setopt install_weak_deps=0 --enablerepo=rhocp-4.14-for-rhel-9-aarch64-rpms"
+    #- ENV PKGMGR_OPTS "--nodocs --setopt install_weak_deps=0 --enablerepo=rhocp-4.14-for-rhel-9-aarch64-rpms"
 
     # (Optional) Install Microsoft azure-cli command line tool (needs dnf to install from url)
     # https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf
@@ -62,7 +62,7 @@ additional_build_steps:
   prepend_galaxy:
       # Ansible Galaxy - critical for ansible-galaxy to work
     - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
-    
+
     # (Optional) Windows Authentication - Kerberos
     #- COPY _build/configs/krb5.conf /etc/krb5.conf
   append_final:

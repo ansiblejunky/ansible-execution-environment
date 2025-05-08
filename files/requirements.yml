@@ -18,8 +18,8 @@ collections:
   - name: azure.azcollection # cloud
   # - name: community.vmware # vmware
   # - name: vmware.vmware_rest # vmware
-  - name: kubernetes.core # containers
-  - name: redhat.openshift # containers
+  #- name: kubernetes.core # containers
+  #- name: redhat.openshift # containers
   # https://opendev.org/openstack/ansible-collections-openstack
   # https://storyboard.openstack.org/#!/dashboard/stories
   # Issue with bindep.txt https://storyboard.openstack.org/#!/story/2010889
