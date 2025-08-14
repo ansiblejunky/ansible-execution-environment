@@ -7,14 +7,15 @@ https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies
 
 ## Quick Start
 
+- Fork this repository
 - Navigate to build server
-- Optionally provision build server using [script](files/provision.sh)
-- Clone this repository
+- Clone your forked repository into build server
+- (Optional) Provision build server using [script](provision.sh) to install required packages
 - Customize
   - Edit dependencies `requirements.yml`, `requirements.txt`, `bindep.txt`
-  - Set token environment variable `ANSIBLE_HUB_TOKEN`
+  - Set token environment variable `AAP_TOKEN` in the terminal window using either your Automation Hub API Token or Red Hat's console offline token
   - Edit `execution-environment.yml` accordingly
-  - Edit `Makefile` variables
+  - Edit `Makefile` top level variables
 - Cleanup with `make clean`
 - Test token with `make token`
 - Build it `make build`

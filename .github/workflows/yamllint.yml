@@ -1,4 +1,8 @@
 # YAML Lint triggered via GitHub Actions
+# This file is used to validate YAML files in the repository.
+# Since this repository is used for Ansible Execution Environments,
+# it is important to ensure that all YAML files are correctly formatted.
+# It is not necessary to use the `ansible-lint` tool here.
 # https://github.com/marketplace/actions/yamllint-github-action
 ---
 name: 'Yamllint'

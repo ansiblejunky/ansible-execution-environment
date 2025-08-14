@@ -1,0 +1,38 @@
+# System binary dependencies
+
+# System packages you want to include into the image.
+# Packages are pulled from ubi repositories https://access.redhat.com/articles/4238681
+# Examples are zip, dnf, and other tools
+# https://docs.opendev.org/opendev/bindep/latest/readme.html#writing-requirements-files
+# This is a cross-platform list tracking distribution packages needed by tests;
+# see https://docs.openstack.org/infra/bindep/ for additional information.
+
+# WORKAROUND: Error message occurs with `install-from-bindep` script but does not raise error
+# /output/install-from-bindep: line 28: [: too many arguments
+# https://github.com/ansible/python-builder-image/issues/48
+
+# Common packages
+dnf
+git
+jq
+rsync
+unzip
+tar
+sudo
+
+# (Optional) Windows Authentication - Kerberos
+# https://docs.ansible.com/automation-controller/latest/html/administration/kerberos_auth.html
+# krb5-libs 
+# krb5-workstation 
+# krb5-devel 
+
+# (Optional) Dependencies for pycurl and python-ldap
+#libcurl-devel 
+#curl-devel 
+#openssl-devel 
+#openldap-devel 
+
+# Dependency for supporting pip packages that need to be compiled
+# This avoids errors that complain about python header files missing
+# 1/19/2024 package is not found when building on arm64 rhel machine!
+#python39-devel 

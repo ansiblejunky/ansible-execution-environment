@@ -1,17 +1,18 @@
 # Ansible Automation Platform - Makefile for Execution Environments
 # Original version found on ansiblejunky @ https://github.com/ansiblejunky/ansible-execution-environment
 
-# Update defaults
-TARGET_TAG ?= v5
+# Default settings
 CONTAINER_ENGINE ?= podman
 VERBOSITY ?= 3
 SOURCE_HUB ?= registry.redhat.io
-SOURCE_TOKEN ?= ${ANSIBLE_HUB_TOKEN}
-#SOURCE_USERNAME ?= jwadleig
+SOURCE_TOKEN ?= AAP_TOKEN
+TARGET_TAG ?= v1
 TARGET_HUB ?= quay.io
-#TARGET_USERNAME ?= jwadleig
-TARGET_NAME ?= ansible-ee-minimal
+TARGET_NAME ?= ansible-ee-config
 
+ifndef $(AAP_TOKEN)
+  $(error The environment variable AAP_TOKEN is undefined and required)
+endif
 
 .PHONY : header clean lint check build scan test publish list shell
 all: header clean lint build test publish
@@ -27,7 +28,7 @@ clean: # Clean temporary files, folders and images
 		ansible-builder.log \
 		ansible-builder.bak.log \
 		collections
-	$(CONTAINER_ENGINE) image prune -a -f
+	$(CONTAINER_ENGINE) image prune -a
 
 lint: # Lint the repository with yamllint
 	@echo "\n\n***************************** Linting... \n"
@@ -35,13 +36,10 @@ lint: # Lint the repository with yamllint
 
 token: # Test token
 	@echo "\n\n***************************** Token... \n"
-	ifndef SOURCE_TOKEN
-		$(error The environment variable ANSIBLE_HUB_TOKEN is undefined and required)
-	endif
 	envsubst < files/ansible.cfg.template > ./ansible.cfg
-	mkdir collections
-	ansible-galaxy collection download -r requirements.yml -p collections/
-
+	mkdir -p collections
+	ansible-galaxy collection install -r files/requirements.yml -p collections/
+	../scan_requirements.sh
 
 build: # Build the execution environment image
 	@echo "\n\n***************************** Building... \n"

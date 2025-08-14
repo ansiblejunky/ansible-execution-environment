@@ -1,0 +1,15 @@
+---
+# Ansible dependencies
+# Pull down ansible roles and collections required by your playbooks
+# Navigate to https://console.redhat.com/ansible/automation-hub for certified content
+# Complete list of certified collections: https://access.redhat.com/articles/3642632
+
+# Cerified Ansible Collection Content
+# https://access.redhat.com/support/articles/ansible-automation-platform-certified-content
+
+collections:
+  - name: infra.aap_configuration # aap
+  - name: ansible.platform # aap
+  - name: ansible.hub # aap
+  - name: ansible.controller # aap
+  #- name: ansible.eda # aap (https://github.com/ansible/event-driven-ansible/issues/424)

@@ -1,0 +1,23 @@
+---
+# NAME: Ansible Navigator Settings
+#   https://ansible.readthedocs.io/projects/navigator/settings/
+# SOURCE: Source of truth on this configuration is located here:
+#   https://github.com/ansiblejunky/ansible-project-template/blob/master/ansible-navigator.yml
+
+ansible-navigator:
+  logging:
+    level: critical
+    file: ./ansible-navigator.log
+  playbook-artifact:
+    enable: false
+  execution-environment:
+    enabled: true
+    image: ansible-ee-config:latest
+    container-engine: auto
+    environment-variables:
+      pass:
+        - ANSIBLE_ADMIN_USER
+        - ANSIBLE_ADMIN_PASSWORD
+      set:
+        VAR1: value1
+  mode: stdout
