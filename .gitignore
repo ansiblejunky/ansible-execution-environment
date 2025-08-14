@@ -4,3 +4,5 @@ context
 env.sh
 ansible.cfg
 .vagrant
+collections
+*.log
