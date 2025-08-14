@@ -15,13 +15,6 @@ sudo dnf install -y podman skopeo \
     libcurl-devel libssh-devel \
     python3-devel openldap-devel
 
-# Prepare git configuration
-sudo git config --global --add safe.directory /vagrant
-
-# Prepare for ansible-navigator on ARM64
-sudo subscription-manager repos --enable codeready-builder-for-rhel-9-aarch64-rpms
-sudo dnf install -y oniguruma-devel
-
 # Prepare python virtual environment
 python3 -m pip install --upgrade pip
 python3 -m pip install virtualenv

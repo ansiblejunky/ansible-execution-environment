@@ -6,12 +6,15 @@ TARGET_TAG ?= v5
 CONTAINER_ENGINE ?= podman
 VERBOSITY ?= 3
 SOURCE_HUB ?= registry.redhat.io
-SOURCE_TOKEN ?= ${ANSIBLE_HUB_TOKEN}
+SOURCE_TOKEN ?= ANSIBLE_HUB_TOKEN
 #SOURCE_USERNAME ?= jwadleig
 TARGET_HUB ?= quay.io
 #TARGET_USERNAME ?= jwadleig
 TARGET_NAME ?= ansible-ee-minimal
 
+ifndef $(SOURCE_TOKEN)
+  $(error The environment variable ANSIBLE_HUB_TOKEN is undefined and required)
+endif
 
 .PHONY : header clean lint check build scan test publish list shell
 all: header clean lint build test publish
@@ -35,12 +38,9 @@ lint: # Lint the repository with yamllint
 
 token: # Test token
 	@echo "\n\n***************************** Token... \n"
-	ifndef SOURCE_TOKEN
-		$(error The environment variable ANSIBLE_HUB_TOKEN is undefined and required)
-	endif
 	envsubst < files/ansible.cfg.template > ./ansible.cfg
-	mkdir collections
-	ansible-galaxy collection download -r requirements.yml -p collections/
+	mkdir -p collections
+	ansible-galaxy collection download -r files/requirements.yml -p collections/
 
 
 build: # Build the execution environment image
