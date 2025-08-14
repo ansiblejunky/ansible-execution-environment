@@ -39,7 +39,7 @@ token: # Test token
 	envsubst < files/ansible.cfg.template > ./ansible.cfg
 	mkdir -p collections
 	ansible-galaxy collection install -r files/requirements.yml -p collections/
-	../scan_requirements.sh
+	../collection_scanner.sh
 
 build: # Build the execution environment image
 	@echo "\n\n***************************** Building... \n"
