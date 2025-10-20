@@ -2,8 +2,27 @@
 
 Example repository to build Ansible Execution Environments using a Makefile.
 
+TODO: Move Makefile to root level, and have it ask for a folder name to prevent duplicate files in folders (simplify)
+
 TODO: Update docs to leverage new PIP_INDEX_URL environment variable option
 https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies-ansible-execution-environments#python_dependency_management
+
+TODO: Add info about podman signatures parameter `--remove-signatures`
+The error message "Copying this image would require changing layer representation" in Podman typically arises when attempting to push or transfer an image that has certain characteristics, such as being signed or having a specific digest requirement at the destination, which would be invalidated by a change in its internal layer representation during the copy operation.
+
+TODO: Remove `make token` and galaxy.sh, and put ENVs into execution-environment.yml and just have Makefile check if env var is set
+https://developers.redhat.com/articles/2025/01/23/strategies-eliminating-ansible-hardcoded-credentials#manageability
+
+TODO: Describe scripts
+```shell
+# Prepare environment variables
+source 00-envs.sh
+
+# Cleanup local files and images
+./01-clean.sh
+
+
+```
 
 ## Quick Start
 
@@ -16,8 +35,8 @@ https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies
   - Set token environment variable `AAP_TOKEN` in the terminal window using either your Automation Hub API Token or Red Hat's console offline token
   - Edit `execution-environment.yml` accordingly
   - Edit `Makefile` top level variables
-- Cleanup with `make clean`
-- Test token with `make token`
+- (Optional) Cleanup with `make clean`
+- (Optional) Test token with `make token`
 - Build it `make build`
 - Test it `make test`
 - Inspect it `make inspect`
@@ -26,7 +45,22 @@ https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies
 - Publish it `make publish`
 - Enjoy your day
 
-## Find and Test Image
+## Execution Environments
+
+The following common execution environments are available such as those for AAP management, VMware, AWS, and Windows.
+
+- ee-config
+
+This contains all of the Ansible Collections necessary to manage and run AAP using config-as-code approach.
+
+- ee-vmware
+- ee-windows
+
+## Tips and Tricks
+
+Some helpful things you might be useful while dealing with Execution Environments.
+
+### Find and Test Image
 
 Search for images and then checks collections, system packages and python packages manually before we run the ansible-builder command.
 
@@ -56,14 +90,14 @@ microdnf install vi git rsync unzip tar sudo gcc openssl openssl-devel gcc-c++ d
 pip3 install -r requirements.txt
 ```
 
-## Security
+### Security
 
 It's important to scan your image for vulnerabilities.  Below are a couple articles showing how to do that. The recommendation is to implement this inside the [Makefile](./Makefile) in this repository so you can run it easily as part of your pipeline.
 
 - [Using Snyk and Podman to scan container images from development to deployment](https://www.redhat.com/en/blog/using-snyk-and-podman-scan-container-images-development-deployment)
 - [DevSecOps: Image scanning in your pipelines using quay.io scanner](https://www.redhat.com/sysadmin/using-quayio-scanner)
 
-## Regression Testing
+### Regression Testing
 
 We can test that everything is working by running an Ansible Playbook in the image using `ansible-navigator`. The tool launches the container, runs the playbook and shows an interactive screen where you can watch the playbook run through. To quit the tool, use similar mechanism `:q!` like within a `vi` editor.
 
@@ -75,7 +109,7 @@ ansible-navigator run playbook.yml --container-engine podman --execution-environ
 ansible-navigator config --container-engine podman --execution-environment-image ansible-ee:5.0
 ```
 
-## Tips and Tricks
+### Other things
 
 Building:
 
@@ -122,6 +156,7 @@ Ansible Navigator:
 ```shell
 ansible-navigator run <playbook> --syntax-check --mode stdout`
 ```
+- [How to change Default execution environment or Control Plane Execution Environment](https://access.redhat.com/solutions/7116964)
 
 - Start shell session inside container image:
 
@@ -189,7 +224,7 @@ podman commit --message "Replaced yum repos" --author "ACME Company" <containerI
 podman push <image-name> quay.io/username/myimage
 ```
 
-## Tools
+### Tools
 
 ansible-builder:
 
@@ -254,6 +289,7 @@ Execution Environments:
 - [Blog - The Anatomy of Automation Execution Environments](https://www.ansible.com/blog/the-anatomy-of-automation-execution-environments)
 - [Automation Controller - Execution Environments](https://docs.ansible.com/automation-controller/latest/html/userguide/execution_environments.html)
 - [Execution Environment Setup Reference](https://docs.ansible.com/automation-controller/latest/html/userguide/ee_reference.html#execution-environment-setup-reference)
+- [Examples of common Execution Environments](https://github.com/cloin/ee-builds)
 
 Makefiles:
 

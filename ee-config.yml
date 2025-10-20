@@ -1,0 +1,61 @@
+---
+# Ansible Builder Execution Environment
+# https://ansible.readthedocs.io/projects/builder/en/latest/definition/#version-3-sample-file
+
+version: 3
+
+build_arg_defaults:
+  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: '--ignore-certs'
+
+dependencies:
+  galaxy: ee-config/requirements.yml
+  python: ee-config/requirements.txt
+  system: ee-config/bindep.txt
+
+options:
+  package_manager_path: /usr/bin/microdnf
+
+images:
+  base_image:
+    name: "{{ lookup('env','ANSIBLE_EE_BASE_IMAGE') }}"
+
+additional_build_files:
+  - src: ansible.cfg # ansible-galaxy
+    dest: configs
+    # Adding openshift-clients https://access.redhat.com/solutions/6985157
+    # Download the rpm from Red Hat Customer Portal and save into ee-config/openshift-clients.rpm
+    # curl "https://access.cdn.redhat.com/content/origin/rpms/openshift-clients/4.18.0/202507080904.p0.g4fcb2d0.assembly.stream.el9/fd431d51/openshift-clients-4.18.0-202507080904.p0.g4fcb2d0.assembly.stream.el9.x86_64.rpm?user=c7191bcec697812c9a48596a1cc8d162&_auth_=1755627845_c02b18b186b0c09f448174f8c50d66a1" -o files/openshift-clients.rpm
+  - src: ee-config/openshift-clients.rpm # openshift clients
+    dest: configs
+
+additional_build_steps:
+  prepend_base:
+    - RUN cat /etc/os-release
+    - RUN dnf install -y _build/configs/openshift-clients.rpm && \
+        rm -f openshift-clients.rpm
+
+  prepend_galaxy:
+    - ARG ANSIBLE_GALAXY_SERVER_LIST
+    - ARG ANSIBLE_GALAXY_SERVER_CERTIFIED_URL
+    - ARG ANSIBLE_GALAXY_SERVER_CERTIFIED_AUTH_URL
+    - ARG ANSIBLE_GALAXY_SERVER_CERTIFIED_TOKEN
+    - ARG ANSIBLE_GALAXY_SERVER_VALIDATED_URL
+    - ARG ANSIBLE_GALAXY_SERVER_VALIDATED_AUTH_URL
+    - ARG ANSIBLE_GALAXY_SERVER_VALIDATED_TOKEN
+    - ARG ANSIBLE_GALAXY_SERVER_COMMUNITY_URL
+
+  prepend_final: |
+    RUN whoami
+    RUN cat /etc/os-release
+
+  append_final:
+    # Verify installed Python packages
+    # https://ansible.readthedocs.io/projects/builder/en/latest/scenario_guides/scenario_pip_check/
+    - RUN $PYCMD -m pip check
+    # Update and clean system packages
+    - >
+      RUN $PKGMGR update -y &&
+      $PKGMGR clean all &&
+      rm -rf /var/cache/{dnf,yum} &&
+      rm -rf /var/lib/dnf/history.* &&
+      rm -rf /var/log/*
