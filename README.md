@@ -16,7 +16,8 @@ https://developers.redhat.com/articles/2025/01/23/strategies-eliminating-ansible
 TODO: Describe scripts
 ```shell
 # Prepare environment variables
-source 00-envs.sh
+export AAP_TOKEN=<your_token>
+source 00-envs-console.sh
 
 # Cleanup local files and images
 ./01-clean.sh
@@ -44,6 +45,31 @@ source 00-envs.sh
 - (Optional) Look inside `make shell`
 - Publish it `make publish`
 - Enjoy your day
+
+## Environment scripts
+
+This repository provides small helper scripts to set the environment variables used when building Ansible Execution Environments. The top-level `00-envs.sh` was split into two focused scripts so users can source the one that matches their environment.
+
+- `00-envs-hub.sh` — For on-prem Automation Hub installations. Usage:
+
+```shell
+export AAP_TOKEN=<your_token>
+source 00-envs-hub.sh my-hub.example.com
+```
+
+The hub script sets common Execution Environment variables and configures the Galaxy server URLs to point at your Automation Hub instance. It requires the host name of the hub as the single argument.
+
+- `00-envs-console.sh` — For using Red Hat's console.redhat.com (offline token). Usage:
+
+```shell
+export AAP_TOKEN=<your_refresh_token>
+source 00-envs-console.sh
+```
+
+The console script sets the common Execution Environment variables and refreshes the console offline token (it expires periodically). It configures the Galaxy server URLs to point at Red Hat's console APIs.
+
+The original `00-envs.sh` now acts as a small helper that points to these two scripts. You can still run `source 00-envs.sh` to get the usage hints.
+
 
 ## Execution Environments
 

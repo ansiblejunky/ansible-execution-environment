@@ -20,8 +20,6 @@ images:
     name: "{{ lookup('env','ANSIBLE_EE_BASE_IMAGE') }}"
 
 additional_build_files:
-  - src: ansible.cfg # ansible-galaxy
-    dest: configs
     # Adding openshift-clients https://access.redhat.com/solutions/6985157
     # Download the rpm from Red Hat Customer Portal and save into ee-config/openshift-clients.rpm
     # curl "https://access.cdn.redhat.com/content/origin/rpms/openshift-clients/4.18.0/202507080904.p0.g4fcb2d0.assembly.stream.el9/fd431d51/openshift-clients-4.18.0-202507080904.p0.g4fcb2d0.assembly.stream.el9.x86_64.rpm?user=c7191bcec697812c9a48596a1cc8d162&_auth_=1755627845_c02b18b186b0c09f448174f8c50d66a1" -o files/openshift-clients.rpm
