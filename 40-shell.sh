@@ -15,4 +15,4 @@ echo -e "\n--- Starting Shell --- \n"
 # Will remove the container upon exit
 # Will mount the current directory into /workdir in the container
 # Will first pull image if not present locally
-podman run -it --rm $(TARGET_NAME):$(TARGET_TAG) /bin/bash
+podman run -it --rm $(ANSIBLE_EE_TARGET_NAME):$(ANSIBLE_EE_TARGET_TAG) /bin/bash

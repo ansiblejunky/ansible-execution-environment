@@ -14,6 +14,7 @@ rm -rf \
     ansible-navigator.log \
     ansible-builder.log \
     ansible-builder.bak.log \
-    collections
-echo -e "\n--- Cleaning: Remove podman images --- \n"
+    tmp_collections
+echo -e "\n--- Cleaning: Remove podman images and containers --- \n"
+podman container prune -f
 podman image prune -a

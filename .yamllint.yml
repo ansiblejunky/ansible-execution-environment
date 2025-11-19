@@ -7,3 +7,7 @@ ignore-from-file: .gitignore
 rules:
     line-length: false
     new-line-at-end-of-file: false
+    comments: false
+    comments-indentation: false
+    trailing-spaces: false
+    document-start: false

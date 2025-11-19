@@ -6,7 +6,7 @@
 # https://github.com/marketplace/actions/yamllint-github-action
 ---
 name: 'Yamllint'
-on: [push, pull_request]
+on: [push, pull_request] # yamllint disable-line
 jobs:
   build:
     name: 'Yamllint'

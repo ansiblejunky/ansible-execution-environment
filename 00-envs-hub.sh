@@ -44,4 +44,4 @@ export ANSIBLE_GALAXY_SERVER_VALIDATED_URL=https://$1/pulp_ansible/galaxy/valida
 export ANSIBLE_GALAXY_SERVER_VALIDATED_TOKEN=${AAP_TOKEN}
 export ANSIBLE_GALAXY_SERVER_COMMUNITY_URL=https://galaxy.ansible.com
 
-echo "Configured Ansible Galaxy environment variables for Automation Hub ($1)"
+echo "Configured environment variables for Automation Hub ($1)"

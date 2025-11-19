@@ -10,8 +10,8 @@
 
 echo -e "\n--- Starting Information --- \n"
 echo -e "--- Python Version --- \n"
-podman container run -it --rm $(TARGET_NAME):$(TARGET_TAG) python --version
+podman container run -it --rm $(ANSIBLE_EE_TARGET_NAME):$(ANSIBLE_EE_TARGET_TAG) python --version
 echo -e "--- Ansible Version --- \n"
-podman container run -it --rm $(TARGET_NAME):$(TARGET_TAG) ansible --version
+podman container run -it --rm $(ANSIBLE_EE_TARGET_NAME):$(ANSIBLE_EE_TARGET_TAG) ansible --version
 echo -e "\n--- Ansible Collections --- \n"
-podman container run -it --rm $(TARGET_NAME):$(TARGET_TAG) ansible-galaxy collection list
+podman container run -it --rm $(ANSIBLE_EE_TARGET_NAME):$(ANSIBLE_EE_TARGET_TAG) ansible-galaxy collection list

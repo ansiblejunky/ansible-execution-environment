@@ -12,6 +12,8 @@
 # https://github.com/ansible/python-builder-image/issues/48
 
 # Common packages
+vim
+git
 dnf
 git
 jq
@@ -19,12 +21,27 @@ rsync
 unzip
 tar
 sudo
+openssl
+openssl-devel
+jq
 
-# (Optional) Windows Authentication - Kerberos
+# Python developer tools
+gcc
+gcc-c++
+libpq-devel
+python3.11-devel
+glibc-headers
+libcurl-devel
+libssh-devel
+python3-Cython
+python3-devel
+openldap-devel
+
+# Windows Authentication - Kerberos
 # https://docs.ansible.com/automation-controller/latest/html/administration/kerberos_auth.html
-# krb5-libs 
-# krb5-workstation 
-# krb5-devel 
+krb5-libs 
+krb5-workstation 
+krb5-devel 
 
 # (Optional) Dependencies for pycurl and python-ldap
 #libcurl-devel 
