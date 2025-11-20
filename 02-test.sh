@@ -4,7 +4,7 @@
 # PURPOSE:
 #   Scan Ansible Collections for requirements.txt files and list Python packages
 # USAGE:
-#   ./02-test.sh [folder]
+#   ./02-test.sh
 # SOURCE:
 #   https://github.com/ansiblejunky/ansible-project-template/blob/main/02-test.sh
 
@@ -18,15 +18,17 @@ echo ""
 # Ensure the temporary directory is clean
 rm -rf ${ROOT_DIR}
 
-# Ensure a folder argument is provided
-if [ -z "$1" ]; then
-    echo "Usage: $0 [folder]"
+# Require ANSIBLE_EE_TARGET_NAME to be set (target folder containing requirements.yml)
+if [ -z "${ANSIBLE_EE_TARGET_NAME}" ]; then
+    echo "Environment variable ANSIBLE_EE_TARGET_NAME must be set to the target folder containing requirements.yml"
+    echo "Example: export ANSIBLE_EE_TARGET_NAME=path/to/collection_dir"
     exit 1
 fi
 
 # Install collections
 mkdir -p ${ROOT_DIR}
-ansible-galaxy collection install -r $1/requirements.yml -p ${ROOT_DIR}/
+echo "Using ANSIBLE_EE_TARGET_NAME='${ANSIBLE_EE_TARGET_NAME}'"
+ansible-galaxy collection install -r ${ANSIBLE_EE_TARGET_NAME}/requirements.yml -p ${ROOT_DIR}/
 
 # Find all requirements.txt files and process them
 find "$ROOT_DIR" -type f -name "requirements.txt" | while read -r req_file; do
