@@ -71,7 +71,19 @@ The console script sets the common Execution Environment variables and refreshes
 The original `00-envs.sh` now acts as a small helper that points to these two scripts. You can still run `source 00-envs.sh` to get the usage hints.
 
 
-## Tips and Tricks
+### Regression Testing
+
+We can test that everything is working by running an Ansible Playbook in the image using `ansible-navigator`. The tool launches the container, runs the playbook and shows an interactive screen where you can watch the playbook run through. To quit the tool, use similar mechanism `:q!` like within a `vi` editor.
+
+```shell
+# Run playbook to test basic operations against new image
+ansible-navigator run playbook.yml --container-engine podman --execution-environment-image ansible-ee:5.0
+
+# Check configuration of new image
+ansible-navigator config --container-engine podman --execution-environment-image ansible-ee:5.0
+```
+
+### Other things
 
 Some helpful things you might be useful while dealing with Execution Environments.
 
@@ -96,20 +108,6 @@ microdnf install $(cat bindep.txt)
 # Install python libraries
 pip3 install -r requirements.txt
 ```
-
-### Regression Testing
-
-We can test that everything is working by running an Ansible Playbook in the image using `ansible-navigator`. The tool launches the container, runs the playbook and shows an interactive screen where you can watch the playbook run through. To quit the tool, use similar mechanism `:q!` like within a `vi` editor.
-
-```shell
-# Run playbook to test basic operations against new image
-ansible-navigator run playbook.yml --container-engine podman --execution-environment-image ansible-ee:5.0
-
-# Check configuration of new image
-ansible-navigator config --container-engine podman --execution-environment-image ansible-ee:5.0
-```
-
-### Other things
 
 ```shell
 # Explore default execution environment
