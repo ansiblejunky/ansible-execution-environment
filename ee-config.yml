@@ -1,36 +1,64 @@
 ---
 # Ansible Builder Execution Environment
-# https://ansible.readthedocs.io/projects/builder/en/latest/definition/#version-3-sample-file
-
 version: 3
-
 build_arg_defaults:
-  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: '--ignore-certs'
-
-dependencies:
-  galaxy: ee-config/requirements.yml
-  python: ee-config/requirements.txt
-  system: ee-config/bindep.txt
-
+  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: '--ignore-certs -vvv'
 options:
-  package_manager_path: /usr/bin/microdnf
-
+  package_manager_path: /usr/bin/dnf
 images:
   base_image:
-    name: "{{ lookup('env','ANSIBLE_EE_BASE_IMAGE') }}"
+    name: docker.io/redhat/ubi9:latest
+
+dependencies:
+  python_interpreter:
+    package_system: "python3.11 python3.11-devel"
+    python_path: "/usr/bin/python3.11" 
+  ansible_core:
+    package_pip: ansible-core
+  ansible_runner:
+    package_pip: ansible-runner
+  galaxy:
+    collections:
+      - name: ansible.utils
+      - name: community.general
+      - name: ansible.platform
+      - name: ansible.hub
+      - name: ansible.controller
+      - name: infra.aap_configuration # Requires special system packages
+      - name: ansible.eda # Requires special system packages
+      - name: redhat_cop.aap_utilities # Requires openshift_clients package
+  python:
+    - psutil
+    - six
+
+  system: # https://github.com/ansible/event-driven-ansible/issues/424#issuecomment-3349017984
+    - gcc [platform:rpm]
+    - systemd-devel [platform:rpm]
+    - pkgconf-pkg-config [platform:rpm]
+    - krb5-libs [platform:rpm] # Required by gssapi
+    - krb5-devel [platform:rpm] # Required by gssapi
+    # Optional, but useful to have in EE
+    # - git [platform:rpm]
+    # - wget [platform:rpm]
+    # - curl [platform:rpm]
+    # - jq [platform:rpm]
+    # - rsync [platform:rpm]
+    # - unzip [platform:rpm]
+    # - tar [platform:rpm]
+    # - sudo [platform:rpm]
 
 additional_build_files:
-    # Adding openshift-clients https://access.redhat.com/solutions/6985157
-    # Download the rpm from Red Hat Customer Portal and save into ee-config/openshift-clients.rpm
-    # curl "https://access.cdn.redhat.com/content/origin/rpms/openshift-clients/4.18.0/202507080904.p0.g4fcb2d0.assembly.stream.el9/fd431d51/openshift-clients-4.18.0-202507080904.p0.g4fcb2d0.assembly.stream.el9.x86_64.rpm?user=c7191bcec697812c9a48596a1cc8d162&_auth_=1755627845_c02b18b186b0c09f448174f8c50d66a1" -o files/openshift-clients.rpm
-  - src: ee-config/openshift-clients.rpm # openshift clients
+  - src: files/openshift-clients.rpm
     dest: configs
 
 additional_build_steps:
   prepend_base:
     - RUN cat /etc/os-release
-    - RUN dnf install -y _build/configs/openshift-clients.rpm && \
-        rm -f openshift-clients.rpm
+    - COPY _build/configs/*.rpm /tmp/
+    - RUN dnf install -y /tmp/openshift-clients.rpm && rm -f /tmp/openshift-clients.rpm
+
+  append_base:
+    - RUN $PYCMD -m pip install --upgrade pip setuptools wheel
 
   prepend_galaxy:
     - ARG ANSIBLE_GALAXY_SERVER_LIST
@@ -42,15 +70,8 @@ additional_build_steps:
     - ARG ANSIBLE_GALAXY_SERVER_VALIDATED_TOKEN
     - ARG ANSIBLE_GALAXY_SERVER_COMMUNITY_URL
 
-  prepend_final: |
-    RUN whoami
-    RUN cat /etc/os-release
-
   append_final:
-    # Verify installed Python packages
-    # https://ansible.readthedocs.io/projects/builder/en/latest/scenario_guides/scenario_pip_check/
     - RUN $PYCMD -m pip check
-    # Update and clean system packages
     - >
       RUN $PKGMGR update -y &&
       $PKGMGR clean all &&

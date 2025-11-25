@@ -1,23 +1,23 @@
 #!/bin/bash
-# 00-envs.sh
+# 00-prepare.sh
 # Set environment variables for Ansible Galaxy and Execution Environment builds.
 # Default: console.redhat.com (console mode). If a second parameter (hub_host)
 # is provided, configure for Automation Hub (hub mode).
 # Usage (console default):
 #   export AAP_TOKEN=<your_refresh_token>
-#   source 00-envs.sh <target_name>
+#   source 00-prepare.sh <target_name>
 # Usage (hub mode):
 #   export AAP_TOKEN=<your_token>
-#   source 00-envs.sh <target_name> <hub_host>
+#   source 00-prepare.sh <target_name> <hub_host>
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  echo "This script is intended to be sourced: source 00-envs.sh <target_name> [hub_host]"
+  echo "This script is intended to be sourced: source 00-prepare.sh <target_name> [hub_host]"
   exit 1
 fi
 
 # Ensure target_name parameter is provided
 if [[ -z "$1" ]]; then
-    echo "Usage: source 00-envs.sh <target_name> [hub_host]"
+    echo "Usage: source 00-prepare.sh <target_name> [hub_host]"
     return 1
 fi
 
@@ -54,13 +54,10 @@ done
 export ANSIBLE_EE_VERBOSITY=3
 export ANSIBLE_EE_SOURCE_HUB=registry.redhat.io
 export ANSIBLE_EE_SOURCE_TOKEN=${AAP_TOKEN}
-export ANSIBLE_EE_TARGET_TAG=v1
+export ANSIBLE_EE_TARGET_TAG=v1 #TODO: This will change per build
 export ANSIBLE_EE_TARGET_HUB=quay.io
 export ANSIBLE_EE_TARGET_PROJECT=jwadleig
 export ANSIBLE_EE_TARGET_NAME=${TARGET_NAME}
-
-# Base image (shared)
-export ANSIBLE_EE_BASE_IMAGE=registry.redhat.io/ansible-automation-platform-25/ee-minimal-rhel9:latest
 
 # Set Galaxy server list common to both modes
 export ANSIBLE_GALAXY_SERVER_LIST=certified,validated,community
@@ -88,3 +85,19 @@ else
 
     echo "Configured environment variables for console.redhat.com"
 fi
+
+echo -e "\n--- Prepare: Remove temp files --- \n"
+rm -rf \
+    context \
+    *.log \
+    tmp_collections
+
+echo -e "\n--- Prepare: Remove containers --- \n"
+podman container prune -f
+echo -e "\n--- Prepare: Remove images --- \n"
+podman image prune -a
+
+echo -e "\n--- Prepare: Ensure system requirements --- \n"
+sudo loginctl enable-linger $(whoami)
+sudo dnf install -y podman gettext rsync unzip tar jq git vi vim expect
+echo -e "\n--- Prepare: Completed --- \n"

@@ -24,7 +24,7 @@ sudo loginctl enable-linger $(whoami)
 # Install development tools and utilities (includes make)
 sudo dnf group install -y "Development Tools"
 # Install required packages
-sudo dnf install -y podman gettext rsync unzip tar jq git vi vim
+sudo dnf install -y podman gettext rsync unzip tar jq git vi vim expect
 # Install additional optional packages
 sudo dnf install -y \
     skopeo \

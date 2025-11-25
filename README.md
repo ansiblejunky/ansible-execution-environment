@@ -10,7 +10,24 @@ https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies
 TODO: Add info about podman signatures parameter `--remove-signatures`
 The error message "Copying this image would require changing layer representation" in Podman typically arises when attempting to push or transfer an image that has certain characteristics, such as being signed or having a specific digest requirement at the destination, which would be invalidated by a change in its internal layer representation during the copy operation.
 
-TODO: Remove `make token` and galaxy.sh, and put ENVs into execution-environment.yml and just have Makefile check if env var is set
+TODO: Add info about openshift-clients package
+  # Adding openshift-clients https://access.redhat.com/solutions/6985157
+  # Download the rpm from Red Hat Customer Portal and save into ee-config/openshift-clients.rpm
+  # https://access.redhat.com/downloads/content/openshift-clients/4.12.0-202306230041.p0.gea7c11a.assembly.stream.el8/x86_64/fd431d51/package
+
+TODO: Add info about pip check
+    # Verify installed Python packages
+    # https://ansible.readthedocs.io/projects/builder/en/latest/scenario_guides/scenario_pip_check/
+    - RUN $PYCMD -m pip check
+
+TODO: Add info about custom python version
+https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies-ansible-execution-environments
+dependencies:
+  python_interpreter:
+    package_system: "python310"
+    python_path: "/usr/bin/python3.10" 
+
+TODO: Add info about passing environment vars (galaxy vars)
 https://developers.redhat.com/articles/2025/01/23/strategies-eliminating-ansible-hardcoded-credentials#manageability
 
 TODO: Describe scripts
@@ -27,49 +44,85 @@ source 00-envs-console.sh
 
 ## Quick Start
 
-- Fork this repository
-- Navigate to build server
-- Clone your forked repository into build server
-- (Optional) Provision build server using [script](provision.sh) to install required packages
-- Customize
-  - Edit dependencies `requirements.yml`, `requirements.txt`, `bindep.txt`
-  - Set token environment variable `AAP_TOKEN` in the terminal window using either your Automation Hub API Token or Red Hat's console offline token
-  - Edit `execution-environment.yml` accordingly
-  - Edit `Makefile` top level variables
-- (Optional) Cleanup with `make clean`
-- (Optional) Test token with `make token`
-- Build it `make build`
-- Test it `make test`
-- Inspect it `make inspect`
-- Review it `make info`
-- (Optional) Look inside `make shell`
-- Publish it `make publish`
-- Enjoy your day
+- Initialize
+  - Navigate to build server
+  - Clone your repository
+  - (Optional) Provision build server using [script](provision.sh) to install required packages
+- Prepare `source ./00-prepare.sh ee-config`
+- Build `./01-build.sh`
+- Publish `./02-publish.sh`
 
-## Environment scripts
-
-This repository provides small helper scripts to set the environment variables used when building Ansible Execution Environments. The top-level `00-envs.sh` was split into two focused scripts so users can source the one that matches their environment.
-
-- `00-envs-hub.sh` — For on-prem Automation Hub installations. Usage:
+## Dependency Testing
 
 ```shell
-export AAP_TOKEN=<your_token>
-source 00-envs-hub.sh my-hub.example.com
+# Start shell inside base image container
+podman run -it -v $PWD:/ansible docker.io/redhat/ubi9:latest /bin/bash
+
+# Prepare environment
+dnf install python3.11 python3.11-devel python3.11-pip
+python3.11 -m venv test
+source test/bin/activate
+pip install --upgrade pip
+pip install ansible-core ansible-builder
+
+# Set ansible galaxy variables
+cd /ansible/
+export AAP_TOKEN=...
+source ./00-prepare.sh ee-config
+
+# Inspect collection dependencies
+cd
+vi req.yml
+ansible-galaxy install -r req.yml
+ansible-builder introspect .ansible/collections/
+# .. or ..
+find .ansible/collections/ -type f -name "requirements.txt" -print0 | xargs -0 cat
+
 ```
-
-The hub script sets common Execution Environment variables and configures the Galaxy server URLs to point at your Automation Hub instance. It requires the host name of the hub as the single argument.
-
-- `00-envs-console.sh` — For using Red Hat's console.redhat.com (offline token). Usage:
+Example introspect output:
 
 ```shell
-export AAP_TOKEN=<your_refresh_token>
-source 00-envs-console.sh
+# Dependency data for collections/
+---
+python:
+- 'pytz  # from collection ansible.controller'
+- 'python-dateutil>=2.7.0  # from collection ansible.controller'
+- 'awxkit  # from collection ansible.controller'
+- 'aiobotocore  # from collection ansible.eda'
+- 'aiohttp  # from collection ansible.eda'
+- 'aiokafka[gssapi]  # from collection ansible.eda'
+- 'azure-servicebus  # from collection ansible.eda'
+- 'dpath  # from collection ansible.eda'
+- 'kafka-python; python_version < "3.12"  # from collection ansible.eda'
+- 'kafka-python-ng;  python_version >= "3.12"  # from collection ansible.eda'
+- 'psycopg[binary,pool]  # from collection ansible.eda'
+- 'systemd-python; sys_platform != ''darwin''  # from collection ansible.eda'
+- 'watchdog>=5.0.0  # from collection ansible.eda'
+- 'xxhash  # from collection ansible.eda'
+- 'jsonschema  # from collection ansible.utils'
+- 'textfsm  # from collection ansible.utils'
+- 'ttp  # from collection ansible.utils'
+- 'xmltodict  # from collection ansible.utils'
+- 'netaddr>=0.10.1  # from collection ansible.utils'
+- 'kubernetes>=24.2.0  # from collection kubernetes.core'
+- 'requests-oauthlib  # from collection kubernetes.core'
+- 'jsonpatch  # from collection kubernetes.core'
+system:
+- 'python38-pytz [platform:centos-8 platform:rhel-8]  # from collection ansible.controller'
+- 'python38-requests [platform:centos-8 platform:rhel-8]  # from collection ansible.controller'
+- 'python38-pyyaml [platform:centos-8 platform:rhel-8]  # from collection ansible.controller'
+- 'libsystemd0 [test platform:debian]  # from collection ansible.eda'
+- 'libsystemd-dev [test platform:debian]  # from collection ansible.eda'
+- 'pkg-config  [test platform:debian]  # from collection ansible.eda'
+- 'shellcheck [lint platform:ubuntu-noble]  # from collection ansible.eda'
+- 'rsync [platform:redhat]  # from collection ansible.posix'
+- 'gcc-c++ [doc test platform:rpm]  # from collection ansible.utils'
+- 'python3-devel [test platform:rpm]  # from collection ansible.utils'
+- 'python3 [test platform:rpm]  # from collection ansible.utils'
+- 'kubernetes-client [platform:fedora]  # from collection kubernetes.core'
+- 'openshift-clients [platform:rhel-8]  # from collection kubernetes.core'
+- 'openshift-clients [platform:rhel-9]  # from collection kubernetes.core'
 ```
-
-The console script sets the common Execution Environment variables and refreshes the console offline token (it expires periodically). It configures the Galaxy server URLs to point at Red Hat's console APIs.
-
-The original `00-envs.sh` now acts as a small helper that points to these two scripts. You can still run `source 00-envs.sh` to get the usage hints.
-
 
 ### Regression Testing
 
@@ -77,10 +130,10 @@ We can test that everything is working by running an Ansible Playbook in the ima
 
 ```shell
 # Run playbook to test basic operations against new image
-ansible-navigator run playbook.yml --container-engine podman --execution-environment-image ansible-ee:5.0
+ansible-navigator run playbook.yml --ce podman --eei ansible-ee:5.0
 
 # Check configuration of new image
-ansible-navigator config --container-engine podman --execution-environment-image ansible-ee:5.0
+ansible-navigator config --ce podman --eei ansible-ee:5.0
 ```
 
 ### Other things
@@ -92,24 +145,6 @@ Some helpful things you might be useful while dealing with Execution Environment
 podman login registry.redhat.io
 podman search registry.redhat.io/ansible-automation-platform-25
 
-# TODO: This won't work because of certified collections; move this code to test.sh
-
-# Install ansible collections - check dependencies and newer versions
-podman run -it -v $PWD:/opt/ansible registry.redhat.io/ansible-automation-platform-25/ee-minimal-rhel9:latest /bin/bash
-cd /opt/ansible/ee-windows
-ansible-galaxy collection install -r requirements.yml
-cd /home/runner/.ansible/collections/ansible_collections/
-grep -R python39 * | grep bindep.txt
-grep -R suds *
-ansible-galaxy collection install --upgrade -r requirements.yml
-
-# Install system packages
-microdnf install $(cat bindep.txt)
-# Install python libraries
-pip3 install -r requirements.txt
-```
-
-```shell
 # Explore default execution environment
 ansible-navigator
 # Explore an execution environment 

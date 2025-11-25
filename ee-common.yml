@@ -21,24 +21,20 @@ dependencies:
     collections:
       - name: ansible.utils
       - name: community.general
-      - name: community.windows
-      - name: ansible.windows
 
   python:
     - psutil
     - six
-    # WinRM https://docs.ansible.com/ansible/latest/user_guide/windows_winrm.html#what-is-winrm
-    - pywinrm>=0.3.0
+    # ARA plugin
+    # https://ara.recordsansible.org/blog/2021/12/23/recording-ansible-playbooks-from-awx-with-ara/
+    - ara
 
   system:
     - gcc [platform:rpm]
-    - systemd-devel [platform:rpm]
-    - pkgconf-pkg-config [platform:rpm]
-    # Kerberos
-    # https://docs.ansible.com/automation-controller/latest/html/administration/kerberos_auth.html
-    - krb5-libs [platform:rpm] # Required by gssapi
-    - krb5-devel [platform:rpm] # Required by gssapi
-    - krb5-workstation [platform:rpm] # Required by gssapi
+    #- systemd-devel [platform:rpm]
+    #- pkgconf-pkg-config [platform:rpm]
+    #- krb5-libs [platform:rpm] # Required by gssapi
+    #- krb5-devel [platform:rpm] # Required by gssapi
     # Optional, but useful to have in EE
     # - git [platform:rpm]
     # - wget [platform:rpm]
@@ -48,21 +44,28 @@ dependencies:
     # - unzip [platform:rpm]
     # - tar [platform:rpm]
     # - sudo [platform:rpm]
+    # (Optional) Dependencies for pycurl and python-ldap
+    # - libcurl-devel 
+    # - curl-devel 
+    # - openssl-devel 
+    # - openldap-devel 
+    # - libssh-devel
 
-additional_build_files:
-  - src: files/krb5.conf # kerberos
-    dest: configs
+# additional_build_files:
+#   - src: files/openshift-clients.rpm
+#     dest: configs
 
 additional_build_steps:
   prepend_base:
     - RUN cat /etc/os-release
-    - COPY _build/configs/krb5.conf /etc/krb5.conf # kerberos
-    - > # azure-cli
-     RUN $PKGMGR install -y dnf &&
-     rpm --import https://packages.microsoft.com/keys/microsoft.asc &&
-     dnf -y install -y https://packages.microsoft.com/config/rhel/9.0/packages-microsoft-prod.rpm &&
-     $PKGMGR -y install azure-cli
-     
+    # (Optional) HashiCorp Packer for building machine and container images
+    - >
+     RUN curl https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo --output /etc/yum.repos.d/hashicorp.repo &&
+     $PKGMGR -y install packer
+
+    # (Optional) Red Hat open-scap tool to run security scans on target systems and generate reports
+    - RUN $PKGMGR -y install openscap-scanner
+
   append_base:
     - RUN $PYCMD -m pip install --upgrade pip setuptools wheel
 

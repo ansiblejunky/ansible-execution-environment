@@ -1,50 +1,74 @@
 ---
 # Ansible Builder Execution Environment
-# https://ansible.readthedocs.io/projects/builder/en/latest/definition/#version-3-sample-file
-
 version: 3
-
 build_arg_defaults:
-  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: '--ignore-certs'
-
-dependencies:
-  galaxy: files/requirements.yml
-  python: files/requirements.txt
-  system: files/bindep.txt
-
+  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: '--ignore-certs -vvv'
+options:
+  package_manager_path: /usr/bin/dnf
 images:
   base_image:
-    name: 'registry.redhat.io/ansible-automation-platform-25/ee-minimal-rhel9:latest'
+    name: docker.io/redhat/ubi9:latest
 
-options:
-  package_manager_path: /usr/bin/microdnf
+dependencies:
+  python_interpreter:
+    package_system: "python3.11 python3.11-devel"
+    python_path: "/usr/bin/python3.11" 
+  ansible_core:
+    package_pip: ansible-core
+  ansible_runner:
+    package_pip: ansible-runner
+  galaxy:
+    collections:
+      - name: ansible.utils
+      - name: community.general
+      - name: vmware.vmware_rest
+      - name: vmware.vmware
+
+  python:
+    - psutil
+    - six
+
+  system: # https://github.com/ansible/event-driven-ansible/issues/424#issuecomment-3349017984
+    - gcc [platform:rpm]
+    - systemd-devel [platform:rpm]
+    - pkgconf-pkg-config [platform:rpm]
+    - krb5-libs [platform:rpm] # Required by gssapi
+    - krb5-devel [platform:rpm] # Required by gssapi
+    # Optional, but useful to have in EE
+    # - git [platform:rpm]
+    # - wget [platform:rpm]
+    # - curl [platform:rpm]
+    # - jq [platform:rpm]
+    # - rsync [platform:rpm]
+    # - unzip [platform:rpm]
+    # - tar [platform:rpm]
+    # - sudo [platform:rpm]
 
 additional_build_files:
-  - src: ansible.cfg # ansible-galaxy
+  - src: files/openshift-clients.rpm
     dest: configs
 
 additional_build_steps:
   prepend_base:
-    - RUN whoami
     - RUN cat /etc/os-release
-    - RUN echo PKGMGR = $PKGMGR, PYCMD = $PYCMD
-    - RUN $PYCMD -m pip install --upgrade pip
+    - COPY _build/configs/*.rpm /tmp/
+    - RUN dnf install -y /tmp/openshift-clients.rpm && rm -f /tmp/openshift-clients.rpm
 
-    # (Optional) Install HashiCorp Packer (/usr/bin/packer)
-    #- >
-    #  RUN curl https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo --output /etc/yum.repos.d/hashicorp.repo &&
-    #  $PKGMGR -y install packer
+  append_base:
+    - RUN $PYCMD -m pip install --upgrade pip setuptools wheel
 
-    # (Optional) Install Red Hat open-scap command line tool to run security scans on target systems and generate reports
-    #- RUN $PKGMGR -y install openscap-scanner
   prepend_galaxy:
-    - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg # ansible-galaxy
+    - ARG ANSIBLE_GALAXY_SERVER_LIST
+    - ARG ANSIBLE_GALAXY_SERVER_CERTIFIED_URL
+    - ARG ANSIBLE_GALAXY_SERVER_CERTIFIED_AUTH_URL
+    - ARG ANSIBLE_GALAXY_SERVER_CERTIFIED_TOKEN
+    - ARG ANSIBLE_GALAXY_SERVER_VALIDATED_URL
+    - ARG ANSIBLE_GALAXY_SERVER_VALIDATED_AUTH_URL
+    - ARG ANSIBLE_GALAXY_SERVER_VALIDATED_TOKEN
+    - ARG ANSIBLE_GALAXY_SERVER_COMMUNITY_URL
 
   append_final:
-    # Verify installed packages have compatible dependencies
-    # Logged issue https://github.com/ansible/ansible-builder/issues/416
     - RUN $PYCMD -m pip check
-    # Clean up
     - >
       RUN $PKGMGR update -y &&
       $PKGMGR clean all &&
