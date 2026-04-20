@@ -221,6 +221,16 @@
 
 ## Release Checklist
 
+### Security Verification 🔐 (BEFORE EVERY COMMIT)
+- [ ] Run `git status` - no files in `files/optional-configs/`
+- [ ] Run `git diff --cached` - review all staged changes
+- [ ] Grep for secrets: `git diff --cached | grep -i -E '(password|token|secret|key|api_key|auth|RH_ORG|RH_ACT_KEY|ANSIBLE_HUB_TOKEN|QUAY_)'`
+- [ ] Verify no `token` file staged
+- [ ] Verify no `.env` files with credentials
+- [ ] Check documentation has no hardcoded credentials
+- [ ] Verify `.gitignore` protecting sensitive files
+- [ ] **See SECURITY_CHECKLIST.md for full details**
+
 ### Pre-Release ✅
 - [x] All tests passing on main branch
 - [ ] CHANGELOG.md updated (waiting on testing)
@@ -229,6 +239,7 @@
 - [x] ADRs created for architectural decisions
 - [ ] OpenShift version tested (in progress)
 - [x] Breaking changes documented (N/A for v1.1.0)
+- [x] Security verification complete
 
 ### Release ⏳
 - [ ] CHANGELOG committed and pushed

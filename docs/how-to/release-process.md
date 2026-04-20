@@ -25,11 +25,15 @@ We use [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH) and the AD
 
 Before creating a release:
 
-1. All tests passing on `main` branch
-2. CHANGELOG.md reviewed and updated (can be auto-generated)
-3. Version number decided according to semantic versioning
-4. All documentation updated to reflect changes
-5. ADRs created for any architectural decisions
+1. **Security verification complete** (see [SECURITY_CHECKLIST.md](../../SECURITY_CHECKLIST.md))
+   - No secrets in staged changes
+   - No credentials in documentation
+   - `.gitignore` protecting sensitive files
+2. All tests passing on `main` branch
+3. CHANGELOG.md reviewed and updated (can be auto-generated)
+4. Version number decided according to semantic versioning
+5. All documentation updated to reflect changes
+6. ADRs created for any architectural decisions
 
 ## Release Workflow
 
@@ -50,7 +54,31 @@ mcp__adr-analysis__release_tracking \
 
 Review the generated CHANGELOG and make any necessary manual edits.
 
-### Step 2: Commit CHANGELOG Updates
+### Step 2: Security Verification
+
+**CRITICAL**: Before committing, verify no secrets are included:
+
+```bash
+# Check what's staged
+git status
+
+# Review all changes
+git diff --cached
+
+# Grep for potential secrets
+git diff --cached | grep -i -E '(password|token|secret|key|api_key|auth|RH_ORG|RH_ACT_KEY|ANSIBLE_HUB_TOKEN|QUAY_)'
+
+# Verify sensitive files are ignored
+git check-ignore files/optional-configs/rhsm-activation.env
+git check-ignore files/optional-configs/oc-install.env
+git check-ignore token
+```
+
+If any secrets are found, remove them and update `.gitignore` if needed.
+
+**See [SECURITY_CHECKLIST.md](../../SECURITY_CHECKLIST.md) for complete security verification steps.**
+
+### Step 3: Commit CHANGELOG Updates
 
 ```bash
 git add CHANGELOG.md
@@ -58,7 +86,7 @@ git commit -m "docs: update CHANGELOG for v1.1.0"
 git push origin main
 ```
 
-### Step 3: Create and Push Git Tag
+### Step 4: Create and Push Git Tag
 
 ```bash
 # Create annotated tag
@@ -68,7 +96,7 @@ git tag -a v1.1.0 -m "Release v1.1.0: OpenShift 4.21, dependabot, improved relia
 git push origin v1.1.0
 ```
 
-### Step 4: Automated CI/CD
+### Step 5: Automated CI/CD
 
 GitHub Actions (`.github/workflows/build-and-push.yml`) automatically:
 
@@ -80,7 +108,7 @@ GitHub Actions (`.github/workflows/build-and-push.yml`) automatically:
 4. Extracts relevant CHANGELOG section
 5. Creates GitHub Release with release notes
 
-### Step 5: Verify Release
+### Step 6: Verify Release
 
 **Check GitHub Release:**
 ```bash
@@ -102,7 +130,7 @@ podman run --rm quay.io/takinosh/ansible-execution-environment:v1.1.0 oc version
 - Visit https://quay.io/repository/takinosh/ansible-execution-environment?tab=tags
 - Confirm both version tag (e.g., `v1.1.0`) and `latest` are present
 
-### Step 6: Announce Release
+### Step 7: Announce Release
 
 - Post announcement in relevant channels
 - Update project README if needed
