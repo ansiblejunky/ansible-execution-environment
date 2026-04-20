@@ -317,7 +317,11 @@ venv-check: # Check if venv should be activated (ADR-0006)
 		fi; \
 	fi
 
-build: check-token venv-check # Build the execution environment image
+.PHONY: validate-deps
+validate-deps: # Validate collection dependencies (ADR-0008)
+	@./scripts/validate-collection-deps.sh
+
+build: check-token venv-check validate-deps # Build the execution environment image
 	@echo "\n\n***************************** Building... \n"
 	@if [ -n "$$REDHAT_REGISTRY_USERNAME" ] && [ -n "$$REDHAT_REGISTRY_PASSWORD" ]; then \
 		echo "Logging in to $(SOURCE_HUB)..."; \

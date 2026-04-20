@@ -71,6 +71,7 @@ Links to related documents, ADRs, or external resources
 | [0005](0005-oc-installation-strategy.md) | oc/kubectl Installation Strategy | Accepted | 2026-04-20 |
 | [0006](0006-development-environment-setup.md) | Development Environment Setup | Accepted | 2026-04-20 |
 | [0007](0007-aap-collection-dependencies.md) | AAP Collection Dependencies | Accepted | 2026-04-20 |
+| [0008](0008-collection-dependency-validation.md) | Collection Dependency Validation | Accepted | 2026-04-20 |
 
 ## Creating a New ADR
 
