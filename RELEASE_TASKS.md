@@ -52,6 +52,13 @@
 ## Phase 3: Testing 🔄 IN PROGRESS
 
 ### Task 3.1: Test Path B (Tarball) Installation
+
+**Prerequisites (ADR-0006):**
+- [ ] Install Python 3.11: `sudo dnf install -y python3.11 python3.11-pip python3.11-devel`
+- [ ] Run `make setup` to create venv (will ERROR if Python 3.10+ not found)
+- [ ] Activate venv: `source .venv/bin/activate`
+
+**Build and Test:**
 - [ ] Run `make clean`
 - [ ] Run `make setup-openshift-tarball`
 - [ ] Verify `files/optional-configs/oc-install.env` contains `OC_VERSION=stable-4.21`

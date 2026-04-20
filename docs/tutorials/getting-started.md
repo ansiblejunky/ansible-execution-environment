@@ -8,11 +8,41 @@ This tutorial provides a step-by-step guide to building a custom Ansible Executi
 
 ## Prerequisites
 
-- A build server with `podman` and `git` installed. The `files/provision.sh` script can be used to prepare a RHEL-based system.
-- An `ANSIBLE_HUB_TOKEN` environment variable must be set to authenticate with the Red Hat Automation Hub for downloading certified collections. This is not required for public collections from Ansible Galaxy.
-- Keep tokens and secrets out of git. Use a local `token` file and export it before builds.
+**REQUIRED:**
+- **Python 3.11** (or Python 3.10/3.12) - **enforced by `make setup`** ([ADR-0006](../adrs/0006-development-environment-setup.md))
+  ```bash
+  # Install on RHEL 9 (REQUIRED)
+  sudo dnf install -y python3.11 python3.11-pip python3.11-devel
+  
+  # Verify
+  python3.11 --version  # Should show 3.11.x
+  ```
+- **Podman** (container runtime)
+- **Git** (version control)
+- **System packages**: jq, gettext (for envsubst)
 
-## Step 1: Clone the Repository
+**OPTIONAL:**
+- `ANSIBLE_HUB_TOKEN` for certified collections from Red Hat Automation Hub (not required for public collections from Ansible Galaxy)
+- Red Hat subscription (for RHSM-based OpenShift client installation)
+
+**Security:** Keep tokens and secrets out of git. Use a local `token` file and export it before builds.
+
+## Step 1: Install Python 3.11
+
+**Why Python 3.11?**  
+RHEL 9 ships with Python 3.9, but ansible-navigator requires Python 3.10 or later.  
+`make setup` will **ERROR** if Python 3.10+ is not found.
+
+```bash
+# Install Python 3.11 from RHEL 9 appstream
+sudo dnf install -y python3.11 python3.11-pip python3.11-devel
+
+# Verify installation
+python3.11 --version
+# Expected output: Python 3.11.x
+```
+
+## Step 2: Clone the Repository
 
 Begin by cloning this repository to your build server.
 
@@ -21,26 +51,69 @@ git clone https://github.com/tosin2013/ansible-execution-environment.git
 cd ansible-execution-environment
 ```
 
-## Step 2: Verify Development Environment Setup
+## Step 3: Setup Development Environment
 
-Before building, verify your development environment has all required tools installed:
+The `make setup` command creates a virtual environment and installs all development tools:
 
 ```bash
-# This will check for required tools and provide installation instructions if needed
+# Create venv and install tools (one-time setup)
 make setup
 ```
 
-**What `make setup` checks:**
-- Required system packages: `podman`, `python3`, `git`, `jq`, `envsubst` (via `gettext`)
-- Python version: Validates Python 3.10+ requirement for `ansible-navigator`
-- Ansible Automation Platform tools: `ansible-builder`, `ansible-navigator`, `ansible-core`
-- Environment variables: Warns if `ANSIBLE_HUB_TOKEN` is not set
+This will:
+1. Detect Python 3.11/3.12/3.10 (fails if none found)
+2. Create virtual environment at `.venv/`
+3. Install `ansible-builder`, `ansible-navigator`, `ansible-core`, `yamllint`
+4. Verify podman and other system packages
+
+**What `make setup` does:**
+- Checks for required system packages: `podman`, `python3`, `git`, `jq`, `envsubst`
+- **Validates Python 3.10+ is available** (ERRORS if not found - install Python 3.11 first!)
+- **Creates virtual environment** at `.venv/` using Python 3.11/3.12/3.10
+- **Installs development tools** in venv: `ansible-builder`, `ansible-navigator`, `ansible-core`, `yamllint`
+- Warns if `ANSIBLE_HUB_TOKEN` is not set
+
+**After setup completes:**
+
+```bash
+# Activate the virtual environment
+source .venv/bin/activate
+# or for detailed info:
+source .venv-activate.sh
+
+# Your prompt will change to show (.venv)
+(.venv) [user@host]$
+```
+
+**Important:** You must activate the venv before building!
 
 **On RHEL systems:** The setup target provides RHEL-specific installation instructions using RPM packages when available, which is the recommended approach.
 
 **Insight:** Running `make setup` first helps catch environment issues before attempting builds, saving time and frustration.
 
-## Step 3: Customize Dependencies
+## Step 4: Activate Virtual Environment
+
+**IMPORTANT:** Activate the venv before building:
+
+```bash
+# Activate virtual environment
+source .venv/bin/activate
+
+# Or use the helper (shows detailed info)
+source .venv-activate.sh
+
+# Your prompt changes to show (.venv)
+(.venv) [user@host ansible-execution-environment]$
+```
+
+Verify tools are accessible:
+```bash
+ansible-builder --version
+ansible-navigator --version
+python --version  # Should show 3.11+
+```
+
+## Step 5: Customize Dependencies
 
 The core of your execution environment is defined by its dependencies.
 
@@ -80,7 +153,7 @@ git   [platform:rpm]
 # krb5-workstation [platform:rpm]
 ```
 
-## Step 4: Configure the Build
+## Step 6: Configure the Build
 
 The `execution-environment.yml` file defines the build process. The default base image is:
 
@@ -92,7 +165,7 @@ images:
 
 You can change this to use a different base image if needed.
 
-## Step 5: Build the Image
+## Step 7: Build the Image
 
 The `Makefile` provides a simple way to build the image. It will use `ansible-builder` to combine the base image with your specified dependencies.
 
@@ -106,7 +179,7 @@ podman images --filter reference=ansible-ee-minimal:v5
 ```
 This will create a new container image. By default, as defined in the `Makefile`, this image will be tagged as `ansible-ee-minimal:v5`.
 
-## Step 6: Test the Image
+## Step 8: Test the Image
 
 After the build, run the included test playbook.
 

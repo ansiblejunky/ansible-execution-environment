@@ -104,15 +104,30 @@ setup: # Setup development environment with required tools and dependencies
 		echo "WARNING: Could not determine Python version"; \
 	fi
 	@echo "Setting up virtual environment (ADR-0006)..."
-	@PYTHON_CMD="python3.11"; \
-	if ! command -v python3.11 >/dev/null 2>&1; then \
-		if command -v python3.12 >/dev/null 2>&1; then \
-			PYTHON_CMD="python3.12"; \
-		elif command -v python3.10 >/dev/null 2>&1; then \
-			PYTHON_CMD="python3.10"; \
-		else \
-			PYTHON_CMD="python3"; \
-		fi; \
+	@echo "Detecting Python 3.10+ (required for ansible-navigator)..."
+	@PYTHON_CMD=""; \
+	if command -v python3.11 >/dev/null 2>&1; then \
+		PYTHON_CMD="python3.11"; \
+		echo "✓ Found python3.11 - will use for venv"; \
+	elif command -v python3.12 >/dev/null 2>&1; then \
+		PYTHON_CMD="python3.12"; \
+		echo "✓ Found python3.12 - will use for venv"; \
+	elif command -v python3.10 >/dev/null 2>&1; then \
+		PYTHON_CMD="python3.10"; \
+		echo "✓ Found python3.10 - will use for venv"; \
+	else \
+		echo ""; \
+		echo "ERROR: Python 3.10 or later is REQUIRED (ADR-0006)"; \
+		echo ""; \
+		echo "ansible-navigator requires Python 3.10+, but only found:"; \
+		python3 --version 2>/dev/null || echo "  No python3 found"; \
+		echo ""; \
+		echo "Install Python 3.11 (recommended):"; \
+		echo "  sudo dnf install -y python3.11 python3.11-pip python3.11-devel"; \
+		echo ""; \
+		echo "Then run 'make setup' again."; \
+		echo ""; \
+		exit 1; \
 	fi; \
 	if [ ! -d .venv ]; then \
 		echo "Creating virtual environment with $$PYTHON_CMD..."; \

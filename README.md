@@ -17,13 +17,30 @@ https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies
 - Reference: [Make Targets and Variables](docs/reference/make-targets.md)
 - Explanation: [Concepts](docs/explanation/concepts.md), [Technology Stack](docs/explanation/technology-stack.md), [Design Decisions](docs/explanation/design-decisions.md)
 
+## Prerequisites
+
+**Required** (enforced by `make setup`):
+- **Python 3.10+** (Python 3.11 recommended on RHEL 9) - [ADR-0006](docs/adrs/0006-development-environment-setup.md)
+  ```bash
+  # Install on RHEL 9
+  sudo dnf install -y python3.11 python3.11-pip python3.11-devel
+  ```
+- **Podman** (container runtime)
+- **Git** (version control)
+- **System packages**: jq, gettext (for envsubst)
+
+**Optional**:
+- Red Hat Automation Hub token (for certified collections)
+- Red Hat subscription (for RHSM-based OpenShift client installation)
+
 ## Quick Start
 
 - Navigate to build server
+- **Install Python 3.11** (see Prerequisites above)
 - Container engine: Podman is used throughout this repo and CI.
 - Optionally provision build server using [script](files/provision.sh)
 - Clone this repository
-- **Verify environment setup:** `make setup` (checks for required tools and provides installation guidance)
+- **Verify environment setup:** `make setup` (creates venv, checks for required tools)
 - Customize
   - Edit dependencies `requirements.yml`, `requirements.txt`, `bindep.txt`
   - Set token environment variable `ANSIBLE_HUB_TOKEN` (only needed for build/token targets)
@@ -40,9 +57,10 @@ https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies
 - Enjoy your day
 
 **Key Insights:**
-- **First-time setup:** Run `make setup` to verify your environment before building
+- **First-time setup:** Run `make setup` to create venv and verify your environment
+- **Python 3.11 REQUIRED:** `make setup` will fail if Python 3.10+ not found ([ADR-0006](docs/adrs/0006-development-environment-setup.md))
+- **Virtual environment:** All development tools installed in `.venv/` (activate with `source .venv/bin/activate`)
 - **Token requirements:** Only `make build` and `make token` require `ANSIBLE_HUB_TOKEN`
-- **Python version:** Ensure Python 3.10+ (Python 3.11 recommended on RHEL 9)
 - **System dependencies:** The minimal base image requires `python3-pip` in `bindep.txt`
 - **Testing:** The `make test` target uses `--pull-policy never` to use locally built images
 
