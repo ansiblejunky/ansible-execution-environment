@@ -103,6 +103,45 @@ setup: # Setup development environment with required tools and dependencies
 	else \
 		echo "WARNING: Could not determine Python version"; \
 	fi
+	@echo "Setting up virtual environment (ADR-0006)..."
+	@PYTHON_CMD="python3.11"; \
+	if ! command -v python3.11 >/dev/null 2>&1; then \
+		if command -v python3.12 >/dev/null 2>&1; then \
+			PYTHON_CMD="python3.12"; \
+		elif command -v python3.10 >/dev/null 2>&1; then \
+			PYTHON_CMD="python3.10"; \
+		else \
+			PYTHON_CMD="python3"; \
+		fi; \
+	fi; \
+	if [ ! -d .venv ]; then \
+		echo "Creating virtual environment with $$PYTHON_CMD..."; \
+		$$PYTHON_CMD -m venv .venv || { \
+			echo "ERROR: Failed to create virtual environment"; \
+			echo "Ensure $$PYTHON_CMD and venv module are installed"; \
+			echo "Install with: sudo dnf install -y $${PYTHON_CMD} $${PYTHON_CMD}-pip"; \
+			exit 1; \
+		}; \
+		echo "✓ Virtual environment created at .venv/"; \
+	else \
+		echo "✓ Virtual environment already exists at .venv/"; \
+	fi; \
+	if [ -f .venv/bin/activate ]; then \
+		echo "Installing development tools in venv..."; \
+		.venv/bin/pip install --upgrade pip > /dev/null 2>&1; \
+		.venv/bin/pip install -r requirements-dev.txt || { \
+			echo "WARNING: Failed to install some requirements from requirements-dev.txt"; \
+			echo "You may need to install them manually:"; \
+			echo "  source .venv/bin/activate"; \
+			echo "  pip install -r requirements-dev.txt"; \
+		}; \
+		echo "✓ Development tools installed"; \
+		echo ""; \
+		echo "To activate the virtual environment:"; \
+		echo "  source .venv/bin/activate"; \
+		echo "  (or: source .venv-activate.sh for detailed info)"; \
+		echo ""; \
+	fi
 	@echo "Checking for Ansible Automation Platform tools..."
 	@PYTHON_CMD="python3"; \
 	if command -v python3.11 >/dev/null 2>&1; then \
@@ -249,8 +288,21 @@ token: check-token # Test token
 	mkdir -p collections
 	ansible-galaxy collection download -r files/requirements.yml -p collections/
 
+.PHONY: venv-check
+venv-check: # Check if venv should be activated (ADR-0006)
+	@if [ ! -d .venv ]; then \
+		echo "INFO: No virtual environment found. Run 'make setup' to create one."; \
+	elif [ -z "$$VIRTUAL_ENV" ]; then \
+		if ! command -v ansible-builder >/dev/null 2>&1; then \
+			echo "WARNING: ansible-builder not found in PATH."; \
+			echo "Activate the virtual environment first:"; \
+			echo "  source .venv/bin/activate"; \
+			echo "  (or: source .venv-activate.sh)"; \
+			echo ""; \
+		fi; \
+	fi
 
-build: check-token # Build the execution environment image
+build: check-token venv-check # Build the execution environment image
 	@echo "\n\n***************************** Building... \n"
 	@if [ -n "$$REDHAT_REGISTRY_USERNAME" ] && [ -n "$$REDHAT_REGISTRY_PASSWORD" ]; then \
 		echo "Logging in to $(SOURCE_HUB)..."; \
