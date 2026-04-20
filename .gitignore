@@ -12,3 +12,6 @@ collections
 token
 files/optional-configs/*.env
 files/optional-configs/rhsm-activation.env
+
+# Auto-generated MCP server context (added automatically)
+.mcp-server-context.md

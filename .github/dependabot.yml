@@ -1,0 +1,84 @@
+# Dependabot configuration for ansible-execution-environment
+# Documentation: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "jwadleig"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # Docker/Container base images
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "jwadleig"
+    labels:
+      - "dependencies"
+      - "container"
+    commit-message:
+      prefix: "build"
+      include: "scope"
+    # Ignore patch updates for base image (too frequent, handle in monthly review)
+    ignore:
+      - dependency-name: "registry.redhat.io/ansible-automation-platform-25/ee-minimal-rhel9"
+        update-types: ["version-update:semver-patch"]
+
+  # Python dependencies (pip) - files/requirements.txt
+  - package-ecosystem: "pip"
+    directory: "/files"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "jwadleig"
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "build"
+      include: "scope"
+    # Group minor and patch updates to reduce PR volume
+    groups:
+      python-packages:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Python dependencies (pip) - MkDocs documentation
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "jwadleig"
+    labels:
+      - "dependencies"
+      - "documentation"
+    commit-message:
+      prefix: "docs"
+      include: "scope"

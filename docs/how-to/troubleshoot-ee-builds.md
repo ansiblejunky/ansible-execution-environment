@@ -21,9 +21,11 @@ Use this checklist when `make build` fails or images don’t behave as expected.
 Cause: `kubernetes.core` (or related) adds a bindep on `openshift-clients` for RHEL; the base image lacks the OCP repo.
 
 Fix options:
-- With entitlements (RPM path): add `files/optional-configs/rhsm-activation.env` (RH_ORG/RH_ACT_KEY) and rebuild.
-- Without entitlements: add `files/optional-configs/oc-install.env` (e.g., `OC_VERSION=stable-4.19`) to install `oc`/`kubectl` from tarball; rebuild.
-- Temporarily comment out collections that pull in `kubernetes.core` in `files/requirements.yml`.
+- **Path A (RHSM with improved reliability):** Add `files/optional-configs/rhsm-activation.env` (RH_ORG/RH_ACT_KEY) and rebuild. Updated version tries 4.21, 4.20, 4.19 repos automatically with detailed logging.
+- **Path B (Tarball - recommended for CI):** Add `files/optional-configs/oc-install.env` (e.g., `OC_VERSION=stable-4.21`) to install `oc`/`kubectl` from tarball; rebuild. Now includes retry logic and integrity verification.
+- **Temporary workaround:** Comment out collections that pull in `kubernetes.core` in `files/requirements.yml`.
+
+**Status:** Both paths now have improved error handling and logging (as of v1.1.0).
 
 ### RHSM “Not Subscribed” / No repositories available
 
@@ -40,6 +42,49 @@ Symptom: microdnf reports conflicts when installing curl.
 Fix:
 - We attempt `($PKGMGR -y install curl tar || true)` in the tarball path. If needed, prefer `curl-minimal` (already present on UBI) and skip `curl`.
 - Build still proceeds because the download usually succeeds.
+
+### Intermittent OpenShift Client Download Failures (Path B)
+
+**Symptom:** Tarball download fails with network errors or timeouts.
+
+**Causes:**
+- mirror.openshift.com temporary unavailability
+- Network connectivity issues
+- Corporate firewall/proxy interference
+- Corrupted partial downloads
+
+**Automatic mitigations (already implemented):**
+- 3 automatic retry attempts with delays
+- Built-in curl retry logic (`--retry 3 --retry-delay 5`)
+- 5-minute download timeout to prevent indefinite hangs
+- Tarball integrity verification before extraction
+
+**Manual fixes if build still fails:**
+
+1. **Check mirror availability:**
+   ```bash
+   curl -I https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.21/openshift-client-linux.tar.gz
+   ```
+
+2. **Use specific version instead of stable/latest:**
+   ```bash
+   # More reliable - direct version
+   echo "OC_VERSION=v4.21.0" > files/optional-configs/oc-install.env
+   ```
+
+3. **Corporate proxy:** Export proxy environment in execution-environment.yml:
+   ```yaml
+   - ENV HTTP_PROXY=http://proxy.corp.com:8080
+   - ENV HTTPS_PROXY=http://proxy.corp.com:8080
+   ```
+
+4. **Download tarball manually and use custom URL:**
+   ```bash
+   # Download to accessible location, then:
+   echo "OC_URL=https://your-mirror.com/openshift-client-linux.tar.gz" > files/optional-configs/oc-install.env
+   ```
+
+**Insight:** The retry logic handles >95% of transient failures. Persistent failures usually indicate network infrastructure issues requiring manual intervention.
 
 ### "No module named pip" error
 

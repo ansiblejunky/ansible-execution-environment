@@ -59,8 +59,8 @@ jobs:
       - name: Setup Path B (Tarball) Configuration
         run: |
           mkdir -p files/optional-configs
-          echo "OC_VERSION=latest-4.19" > files/optional-configs/oc-install.env
-          echo "Created oc-install.env for Path B testing with OC_VERSION=latest-4.19"
+          echo "OC_VERSION=stable-4.21" > files/optional-configs/oc-install.env
+          echo "Created oc-install.env for Path B testing with OC_VERSION=stable-4.21"
           # Ensure no RHSM config exists
           rm -f files/optional-configs/rhsm-activation.env
           # Keep Kubernetes collections commented out for Path B (binaries only, no collections)

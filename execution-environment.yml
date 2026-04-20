@@ -55,36 +55,78 @@ additional_build_steps:
       RUN RH_ENV="/_extras/optional/rhsm-activation.env" ; \
           if [ -f "$RH_ENV" ]; then set -a; . "$RH_ENV"; set +a; fi ; \
           if [ -n "$RH_ORG" ] && [ -n "$RH_ACT_KEY" ]; then \
-            echo "==> Enabling OpenShift client repo via RHSM" && \
+            echo "==> [Path A] Installing OpenShift client via RHSM" && \
+            echo "    Organization: $RH_ORG" && \
             (command -v subscription-manager >/dev/null 2>&1 || $PKGMGR -y install subscription-manager || true) && \
+            echo "==> Registering with Red Hat Subscription Manager..." && \
             subscription-manager register --org="$RH_ORG" --activationkey="$RH_ACT_KEY" && \
+            echo "==> Attaching subscriptions..." && \
             subscription-manager attach --auto || true && \
+            echo "==> Checking subscription status..." && \
+            subscription-manager status || echo "WARNING: Subscription status check failed" && \
             ARCH=$(uname -m) && \
-            (subscription-manager repos --enable="rhocp-4.18-for-rhel-9-${ARCH}-rpms" || \
-             subscription-manager repos --enable="rhocp-4.17-for-rhel-9-${ARCH}-rpms" || true) && \
-            ($PKGMGR -y install openshift-clients || true) ; \
+            echo "==> Enabling OpenShift client repo for RHEL 9 ${ARCH}..." && \
+            REPO_ENABLED=0 && \
+            (subscription-manager repos --enable="rhocp-4.21-for-rhel-9-${ARCH}-rpms" && REPO_ENABLED=1 && echo "✓ Enabled rhocp-4.21") || \
+            (subscription-manager repos --enable="rhocp-4.20-for-rhel-9-${ARCH}-rpms" && REPO_ENABLED=1 && echo "✓ Enabled rhocp-4.20") || \
+            (subscription-manager repos --enable="rhocp-4.19-for-rhel-9-${ARCH}-rpms" && REPO_ENABLED=1 && echo "✓ Enabled rhocp-4.19") || \
+            echo "WARNING: No OpenShift client repos could be enabled" && \
+            if [ "$REPO_ENABLED" -eq 1 ]; then \
+              echo "==> Installing openshift-clients package..." && \
+              $PKGMGR -y install openshift-clients && \
+              echo "==> Verifying installation..." && \
+              oc version --client && \
+              kubectl version --client && \
+              echo "✓ Path A (RHSM) installation successful" ; \
+            else \
+              echo "ERROR: Path A (RHSM) failed - no repo enabled" ; \
+            fi ; \
           else \
-            echo "==> Skipping OpenShift client repo enable (no RH_ORG/RH_ACT_KEY provided)" ; \
+            echo "==> Skipping Path A (no RH_ORG/RH_ACT_KEY provided)" ; \
           fi
 
     # Optional: Install oc/kubectl from tarball (no RHSM required)
     # Provide files/optional-configs/oc-install.env with either:
-    #   OC_VERSION=latest-4.19   # or v4.14, v4.18, etc.
+    #   OC_VERSION=stable-4.21   # or latest-4.21, v4.21.0, etc.
     #   # or provide a direct URL
-    #   # OC_URL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/v4.14.30/openshift-client-linux.tar.gz
+    #   # OC_URL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/v4.21.0/openshift-client-linux.tar.gz
     - >
       RUN OC_ENV="/_extras/optional/oc-install.env" ; \
           if [ -f "$OC_ENV" ]; then set -a; . "$OC_ENV"; set +a; fi ; \
           if [ -n "$OC_URL" ] || [ -n "$OC_VERSION" ]; then \
-            echo "==> Installing oc/kubectl from tarball" && \
+            echo "==> [Path B] Installing oc/kubectl from tarball" && \
             echo "    OC_VERSION=$OC_VERSION" && \
             echo "    OC_URL=$OC_URL" && \
             URL="${OC_URL:-https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OC_VERSION}/openshift-client-linux.tar.gz}" && \
             echo "    Final URL=$URL" && \
-            ($PKGMGR -y remove curl-minimal || true) && \
-            ($PKGMGR -y install curl tar || true) && \
-            echo "==> Downloading tarball..." && \
-            curl -L -v -o /tmp/oc.tgz "$URL" 2>&1 | tail -20 && \
+            echo "==> Installing dependencies (curl, tar)..." && \
+            ($PKGMGR -y remove curl-minimal 2>/dev/null || true) && \
+            ($PKGMGR -y install curl tar || { echo "ERROR: Failed to install curl/tar"; exit 1; }) && \
+            echo "==> Downloading tarball (with retries)..." && \
+            DOWNLOAD_SUCCESS=0 && \
+            for ATTEMPT in 1 2 3; do \
+              echo "    Attempt $ATTEMPT/3..." && \
+              if curl -L --fail --retry 3 --retry-delay 5 --max-time 300 \
+                      -o /tmp/oc.tgz "$URL" 2>&1 | tee /tmp/curl.log | tail -10; then \
+                DOWNLOAD_SUCCESS=1 && \
+                echo "✓ Download successful" && \
+                break ; \
+              else \
+                echo "WARNING: Download attempt $ATTEMPT failed" && \
+                sleep 5 ; \
+              fi ; \
+            done && \
+            if [ "$DOWNLOAD_SUCCESS" -eq 0 ]; then \
+              echo "ERROR: Failed to download after 3 attempts" && \
+              cat /tmp/curl.log && \
+              exit 1 ; \
+            fi && \
+            echo "==> Verifying tarball integrity..." && \
+            if ! tar -tzf /tmp/oc.tgz >/dev/null 2>&1; then \
+              echo "ERROR: Downloaded tarball is corrupted" && \
+              exit 1 ; \
+            fi && \
+            echo "✓ Tarball integrity verified" && \
             echo "==> Extracting tarball..." && \
             tar -C /usr/local/bin -xzf /tmp/oc.tgz oc kubectl && \
             echo "==> Setting executable permissions..." && \
@@ -95,10 +137,11 @@ additional_build_steps:
             echo "==> Verifying installation..." && \
             /usr/local/bin/oc version --client && \
             /usr/local/bin/kubectl version --client && \
+            echo "✓ Path B (Tarball) installation successful" && \
             echo "==> Cleanup..." && \
-            rm -f /tmp/oc.tgz ; \
+            rm -f /tmp/oc.tgz /tmp/curl.log ; \
           else \
-            echo "==> Skipping oc/kubectl install (no OC_URL/OC_VERSION)" ; \
+            echo "==> Skipping Path B (no OC_URL/OC_VERSION)" ; \
           fi
 
     # (Optional) Install Red Hat OpenShift client tools by enabling repo (prepare with manual steps below)

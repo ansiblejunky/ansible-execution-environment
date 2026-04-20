@@ -15,7 +15,7 @@ This repository supports optional, opt-in configuration files placed under `file
     - `RH_ACT_KEY=<activation_key>`
     - Enables RHSM registration during build to install `openshift-clients` from Red Hat repos.
   - `oc-install.env` (optional)
-    - `OC_VERSION=stable-4.19` or `v4.19.6`
+    - `OC_VERSION=stable-4.21` or `v4.21.0`
     - `OC_URL=<full_tarball_url>` (optional override)
     - Installs `oc` and `kubectl` from mirror.openshift.com.
 
@@ -41,7 +41,7 @@ RH_ACT_KEY=${{ secrets.RH_ACT_KEY }}
 EOF
     fi
     # oc/kubectl from tarball (recommended for CI)
-    echo "OC_VERSION=stable-4.19" > files/optional-configs/oc-install.env
+    echo "OC_VERSION=stable-4.21" > files/optional-configs/oc-install.env
 ```
 
 ## When to Use Which

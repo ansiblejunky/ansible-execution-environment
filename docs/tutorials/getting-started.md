@@ -121,7 +121,7 @@ This command uses `ansible-navigator` to run `files/playbook.yml` inside the new
 If you need the `kubernetes.core` or `redhat.openshift` collections and the `oc`/`kubectl` CLIs:
 
 - Recommended (no RHSM needed):
-  1) Create `files/optional-configs/oc-install.env` with `OC_VERSION=stable-4.19` (or a pinned version like `v4.19.6`).
+  1) Create `files/optional-configs/oc-install.env` with `OC_VERSION=stable-4.21` (or a pinned version like `v4.21.0`).
   2) Uncomment `kubernetes.core` in `files/requirements.yml`.
   3) Rebuild: `make build`
   4) Verify: `podman run --rm ansible-ee-minimal:v5 oc version --client`

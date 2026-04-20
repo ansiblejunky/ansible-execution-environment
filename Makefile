@@ -357,8 +357,8 @@ setup-openshift-tarball: # Setup for Path B (tarball) testing
 	@echo "\n\n***************************** Setting up OpenShift Tarball (Path B)... \n"
 	@mkdir -p files/optional-configs
 	@if [ ! -f files/optional-configs/oc-install.env ]; then \
-		echo "OC_VERSION=latest-4.19" > files/optional-configs/oc-install.env; \
-		echo "Created files/optional-configs/oc-install.env with OC_VERSION=latest-4.19"; \
+		echo "OC_VERSION=stable-4.21" > files/optional-configs/oc-install.env; \
+		echo "Created files/optional-configs/oc-install.env with OC_VERSION=stable-4.21"; \
 	else \
 		echo "files/optional-configs/oc-install.env already exists"; \
 	fi

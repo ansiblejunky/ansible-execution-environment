@@ -61,8 +61,8 @@ Use this if you do not have RHSM entitlements or want a simpler, portable build.
 1) Create `files/optional-configs/oc-install.env` with a pinned version:
 
 ```
-# Tracks latest in the 4.19 stream; or pin to an exact tag like v4.19.6
-OC_VERSION=stable-4.19
+# Tracks latest in the 4.21 stream; or pin to an exact tag like v4.21.0
+OC_VERSION=stable-4.21
 ```
 
 2) **Optional**: Uncomment collections in `files/requirements.yml` if you need Ansible modules:
@@ -198,7 +198,7 @@ scripts/test-openshift-tooling.sh ansible-ee-minimal:v5 podman
 
 ## Notes and Best Practices
 
-- Pin `OC_VERSION` to your cluster’s major/minor (e.g., `v4.19.6`) for reproducibility.
+- Pin `OC_VERSION` to your cluster’s major/minor (e.g., `v4.21.0`) for reproducibility.
 - If you later adopt RHSM RPM install, remove `oc-install.env` to avoid duplicate installs.
 - Upgrading ansible-builder: we override the builder’s `assemble`/`install-from-bindep` via `additional_build_files` to filter `openshift-clients`. Review these overrides when changing ansible-builder versions.
 
