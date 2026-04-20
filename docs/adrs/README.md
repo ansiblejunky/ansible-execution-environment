@@ -69,6 +69,7 @@ Links to related documents, ADRs, or external resources
 | [0003](0003-openshift-version-policy.md) | OpenShift Version Policy | Accepted | 2026-04-20 |
 | [0004](0004-dependency-management.md) | Dependency Management Strategy | Accepted | 2026-04-20 |
 | [0005](0005-oc-installation-strategy.md) | oc/kubectl Installation Strategy | Accepted | 2026-04-20 |
+| [0006](0006-development-environment-setup.md) | Development Environment Setup | Accepted | 2026-04-20 |
 
 ## Creating a New ADR
 

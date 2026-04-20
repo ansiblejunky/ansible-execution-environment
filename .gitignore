@@ -13,5 +13,10 @@ token
 files/optional-configs/*.env
 files/optional-configs/rhsm-activation.env
 
+# Virtual environments (ADR-0006)
+.venv/
+venv/
+.venv-*/
+
 # Auto-generated MCP server context (added automatically)
 .mcp-server-context.md
