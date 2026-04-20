@@ -11,7 +11,7 @@ dependencies:
   ansible_core:
     package_pip: ansible-core>=2.15.13
   ansible_runner:
-    package_pip: ansible-runner==2.4.1
+    package_pip: ansible-runner>=2.4.1
   galaxy: files/requirements.yml
   python: files/requirements.txt
   system: files/bindep.txt
@@ -100,8 +100,8 @@ additional_build_steps:
             URL="${OC_URL:-https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OC_VERSION}/openshift-client-linux.tar.gz}" && \
             echo "    Final URL=$URL" && \
             echo "==> Installing dependencies (curl, tar)..." && \
-            ($PKGMGR -y remove curl-minimal 2>/dev/null || true) && \
-            ($PKGMGR -y install curl tar || { echo "ERROR: Failed to install curl/tar"; exit 1; }) && \
+            (rpm -e --nodeps curl-minimal 2>/dev/null || true) && \
+            $PKGMGR -y install curl tar --setopt=tsflags=nodocs && \
             echo "==> Downloading tarball (with retries)..." && \
             DOWNLOAD_SUCCESS=0 && \
             for ATTEMPT in 1 2 3; do \
