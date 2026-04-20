@@ -70,6 +70,7 @@ Links to related documents, ADRs, or external resources
 | [0004](0004-dependency-management.md) | Dependency Management Strategy | Accepted | 2026-04-20 |
 | [0005](0005-oc-installation-strategy.md) | oc/kubectl Installation Strategy | Accepted | 2026-04-20 |
 | [0006](0006-development-environment-setup.md) | Development Environment Setup | Accepted | 2026-04-20 |
+| [0007](0007-aap-collection-dependencies.md) | AAP Collection Dependencies | Accepted | 2026-04-20 |
 
 ## Creating a New ADR
 

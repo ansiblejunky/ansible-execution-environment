@@ -88,21 +88,29 @@
 **Assignee**: Claude Code
 
 ### Task 3.2: Test Path A (RHSM) Installation (Optional)
-- [ ] Verify `files/optional-configs/rhsm-activation.env` exists with credentials
-- [ ] Run `make clean`
-- [ ] Run `make setup-openshift-rhsm`
-- [ ] Run `make build-openshift-rhsm`
-- [ ] Check build logs for:
-  - [ ] "✓ Enabled rhocp-4.21" (or 4.20/4.19 fallback)
-  - [ ] "✓ Path A (RHSM) installation successful"
-  - [ ] oc version output showing 4.21.x
-- [ ] Run `make test-openshift-tooling`
-- [ ] Run `make test`
+- [x] Verify `files/optional-configs/rhsm-activation.env` exists with credentials
+- [x] Run `make clean`
+- [x] Run `make setup-openshift-rhsm`
+- [x] Run `make build-openshift-rhsm`
+- [x] Check build logs for:
+  - [x] Build attempted Path A (RHSM)
+  - [x] subscription-manager detected container mode
+  - [x] All repo enable attempts failed (4.21, 4.20, 4.19)
+  - [x] Error: "subscription-manager is operating in container mode"
+- [x] Research container mode limitation
+- [x] Document findings in ADR-0007
+
+**Test Results**:
+- ❌ Path A (RHSM) **NOT VIABLE** for ansible-builder (containerized builds)
+- ✅ Root cause identified: subscription-manager intentionally disables in container mode
+- ✅ Research confirms: nested containers don't inherit host subscriptions
+- ✅ ADR-0007 created: Documents AAP collection dependencies and Path A limitation
+- ✅ Conclusion: Path B (tarball) is the correct approach for CI/CD
 
 **Priority**: 🟡 MEDIUM (Optional)  
-**Status**: ⏳ Pending  
-**Assignee**: TBD  
-**Note**: Skip if RHSM credentials not available
+**Status**: ✅ COMPLETED WITH FINDINGS (2026-04-20)  
+**Assignee**: Claude Code  
+**Outcome**: Path A documented for bare metal only; Path B confirmed as recommended approach
 
 ### Task 3.3: Verify CI/CD Workflows
 - [ ] Visit https://github.com/tosin2013/ansible-execution-environment/actions
