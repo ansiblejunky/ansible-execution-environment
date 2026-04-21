@@ -55,13 +55,25 @@ nav:
       - CI/CD with GitHub Actions and Tekton: how-to/ci-cd.md
       - Build Docs Locally (MkDocs): how-to/build-docs-locally.md
       - Optional llms.txt Manifest: how-to/llms-txt.md
+      - Release Process: how-to/release-process.md
   - Reference:
       - Optional Configs and Secrets: reference/optional-configs-and-secrets.md
       - Make Targets and Variables: reference/make-targets.md
       - execution-environment.yml Reference: reference/execution-environment-yaml.md
       - Tooling Reference: reference/tooling.md
+      - Security Checklist: SECURITY_CHECKLIST.md
   - Explanation:
       - Execution Environment Concepts: explanation/concepts.md
       - Technology Stack: explanation/technology-stack.md
       - Design Decisions: explanation/design-decisions.md
       - Why Keep execution-environment.yml Minimal: explanation/execution-environment-yaml-design.md
+  - Architecture Decision Records:
+      - ADR Overview: adrs/README.md
+      - ADR-0001 Semantic Versioning: adrs/0001-adopt-semantic-versioning.md
+      - ADR-0002 Release Process: adrs/0002-release-process.md
+      - ADR-0003 OpenShift Version Policy: adrs/0003-openshift-version-policy.md
+      - ADR-0004 Dependency Management: adrs/0004-dependency-management.md
+      - ADR-0005 oc Installation Strategy: adrs/0005-oc-installation-strategy.md
+      - ADR-0006 Development Environment: adrs/0006-development-environment-setup.md
+      - ADR-0007 AAP Collection Dependencies: adrs/0007-aap-collection-dependencies.md
+      - ADR-0008 Collection Validation: adrs/0008-collection-dependency-validation.md

@@ -25,7 +25,7 @@ We use [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH) and the AD
 
 Before creating a release:
 
-1. **Security verification complete** (see [SECURITY_CHECKLIST.md](../../SECURITY_CHECKLIST.md))
+1. **Security verification complete** (see [SECURITY_CHECKLIST.md](../SECURITY_CHECKLIST.md))
    - No secrets in staged changes
    - No credentials in documentation
    - `.gitignore` protecting sensitive files
@@ -76,7 +76,7 @@ git check-ignore token
 
 If any secrets are found, remove them and update `.gitignore` if needed.
 
-**See [SECURITY_CHECKLIST.md](../../SECURITY_CHECKLIST.md) for complete security verification steps.**
+**See [SECURITY_CHECKLIST.md](../SECURITY_CHECKLIST.md) for complete security verification steps.**
 
 ### Step 3: Commit CHANGELOG Updates
 
