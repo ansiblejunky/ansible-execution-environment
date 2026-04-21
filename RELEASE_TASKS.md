@@ -169,22 +169,31 @@
 **Commits**: e70d59a, 493cf2f
 
 ### Task 3.4: Verify CI/CD Workflows
-- [ ] Visit https://github.com/tosin2013/ansible-execution-environment/actions
-- [ ] Verify test-openshift-tarball.yml workflow passes:
-  - [ ] Uses stable-4.21
-  - [ ] Build succeeds with retry logic
-  - [ ] All 7 tests pass (including functional tests)
-- [ ] Verify test-openshift-rhsm.yml workflow:
-  - [ ] Gracefully skips if no secrets OR passes with secrets
-- [ ] Verify other workflows pass:
-  - [ ] test-baseline.yml
-  - [ ] yamllint.yml
-  - [ ] docs-build.yml
-- [ ] Review workflow logs for warnings
+- [x] Visit https://github.com/tosin2013/ansible-execution-environment/actions
+- [x] Verify test-openshift-tarball.yml workflow passes:
+  - [x] Uses stable-4.21 ✓
+  - [x] Build succeeds with retry logic ✓
+  - [x] All 7 tests pass (including functional tests) ✓
+- [x] Verify test-openshift-rhsm.yml workflow:
+  - [x] Gracefully skips if no secrets (RHSM disabled in CI) ✓
+- [x] Verify other workflows:
+  - [x] test-baseline.yml ✓
+  - [x] yamllint.yml ✓
+  - [x] docs-build.yml - ⚠️ **FAILED** (fixed post-release)
+- [x] Review workflow logs for warnings
+
+**Results:**
+- ✅ Build and test workflows passing
+- ⚠️ Docs build was failing in strict mode (broken links to SECURITY_CHECKLIST.md)
+- ✅ Fixed post-release (commit f99676d):
+  - Copied SECURITY_CHECKLIST.md to docs/ directory
+  - Updated links in release-process.md
+  - Added missing nav entries for ADRs, release-process, security checklist
 
 **Priority**: 🔴 HIGH  
-**Status**: ⏳ Pending  
-**Assignee**: TBD
+**Status**: ✅ COMPLETED (2026-04-21, docs fixed post-release)  
+**Assignee**: Claude Code  
+**Lesson Learned**: Documentation build verification should be mandatory before tagging releases
 
 **Phase Status**: ✅ COMPLETED (Task 3.1-3.3 complete, 3.4 pending CI/CD verification)  
 **Blocked By**: None  
@@ -334,7 +343,7 @@
 
 ### Pre-Release ⏳
 - [x] All tests passing locally (7/7 tests, 36 ansible tasks)
-- [ ] CHANGELOG.md updated (pending review)
+- [x] CHANGELOG.md updated
 - [x] Version number follows semantic versioning
 - [x] Documentation updated
 - [x] ADRs created for architectural decisions (8 ADRs total)
@@ -342,7 +351,8 @@
 - [x] AAP collections functional testing complete
 - [x] Breaking changes documented (N/A for v1.1.0)
 - [x] Security verification complete
-- [ ] CI/CD workflows verified (Task 3.4 pending)
+- [x] CI/CD workflows verified (docs build fixed post-release)
+- [ ] **Documentation build passes in strict mode** (⚠️ added after v1.1.0 release)
 
 ### Release ⏳
 - [ ] CHANGELOG committed and pushed
