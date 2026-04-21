@@ -72,6 +72,11 @@ jobs:
           QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
           QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
 
+      - name: Setup OpenShift Tooling Config
+        run: |
+          mkdir -p files/optional-configs
+          echo "OC_VERSION=stable-4.21" > files/optional-configs/oc-install.env
+
       - name: Build
         env:
           ANSIBLE_HUB_TOKEN: ${{ secrets.ANSIBLE_HUB_TOKEN }}
