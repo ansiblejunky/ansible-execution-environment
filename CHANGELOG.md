@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (Post-v1.1.0 Release)
+- Documentation build failures in strict mode (commit f99676d, fc8a4a0)
+  - Fixed broken links in `release-process.md` referencing `SECURITY_CHECKLIST.md` outside docs directory
+  - Copied `SECURITY_CHECKLIST.md` to docs/ directory and updated all relative links
+  - Added missing navigation entries for Release Process, Security Checklist, and all 8 ADRs
+  - MkDocs strict mode now passes - all pages included in nav and all internal links valid
+- CI workflow missing OpenShift tooling configuration (commit 2c01622)
+  - Added step to auto-create `oc-install.env` with `OC_VERSION=stable-4.21`
+  - Ensures OpenShift CLI tools are always installed in tagged builds
+  - Resolves build failures when trying to copy non-existent oc/kubectl binaries
+
+### Changed
+- Documentation build verification added to Pre-Release checklist (commit fc8a4a0)
+  - "Documentation build passes in strict mode" now mandatory before tagging releases
+  - Prevents broken documentation from being published with releases
+
 ## [1.1.0] - 2026-04-21
 
 ### Added
