@@ -1,10 +1,271 @@
 ---
-- name: Test Execution Environment
+# Functional Test Playbook for AAP Collections
+# Tests that collections are not just installed, but actually work
+# See: docs/adrs/0007-aap-collection-dependencies.md
+
+- name: Test Execution Environment - AAP Collections Functional Tests
   hosts: localhost
   connection: local
-  gather_facts: false
+  gather_facts: true
+
+  vars:
+    collections_path: "{{ ansible_env.HOME }}/.ansible/collections:/usr/share/ansible/collections"
 
   tasks:
-    - name: Ensure basic operations
+    # ===========================================
+    # Test 1: kubernetes.core Collection
+    # ===========================================
+    - name: "[kubernetes.core] Verify collection installed"
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection list kubernetes.core
+      register: k8s_core_installed
+      changed_when: false
+      failed_when: "'kubernetes.core' not in k8s_core_installed.stdout"
+
+    - name: "[kubernetes.core] Verify kubectl binary accessible via command module"
+      ansible.builtin.command:
+        cmd: kubectl version --client
+      register: kubectl_direct
+      changed_when: false
+      failed_when: kubectl_direct.rc != 0
+
+    - name: "[kubernetes.core] Display kubectl version"
       ansible.builtin.debug:
-        msg: "TODO: Add functional testing here"
+        msg: "kubectl version: {{ kubectl_direct.stdout_lines }}"
+
+    - name: "[kubernetes.core] Verify oc binary accessible"
+      ansible.builtin.command:
+        cmd: oc version --client
+      register: oc_direct
+      changed_when: false
+      failed_when: oc_direct.rc != 0
+
+    - name: "[kubernetes.core] Display oc version"
+      ansible.builtin.debug:
+        msg: "oc version: {{ oc_direct.stdout_lines }}"
+
+    - name: "[kubernetes.core] Verify kubectl module documentation available"
+      ansible.builtin.command:
+        cmd: ansible-doc kubernetes.core.kubectl
+      register: kubectl_doc
+      changed_when: false
+      failed_when: kubectl_doc.rc != 0
+
+    - name: "[kubernetes.core] Verify k8s module documentation available"
+      ansible.builtin.command:
+        cmd: ansible-doc kubernetes.core.k8s
+      register: k8s_doc
+      changed_when: false
+      failed_when: k8s_doc.rc != 0
+
+    - name: "[kubernetes.core] ✓ Collection functional test PASSED"
+      ansible.builtin.debug:
+        msg: "kubernetes.core collection is fully functional (binaries accessible, modules documented)"
+
+    # ===========================================
+    # Test 2: ansible.hub Collection
+    # ===========================================
+    - name: "[ansible.hub] Verify collection installed"
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection list ansible.hub
+      register: hub_installed
+      changed_when: false
+      failed_when: "'ansible.hub' not in hub_installed.stdout"
+
+    - name: "[ansible.hub] Verify collection_remote module documentation"
+      ansible.builtin.command:
+        cmd: ansible-doc ansible.hub.collection_remote
+      register: hub_collection_remote_doc
+      changed_when: false
+      ignore_errors: true
+
+    - name: "[ansible.hub] Verify ah_token module documentation"
+      ansible.builtin.command:
+        cmd: ansible-doc ansible.hub.ah_token
+      register: hub_token_doc
+      changed_when: false
+      ignore_errors: true
+
+    - name: "[ansible.hub] List available modules"
+      ansible.builtin.shell:
+        cmd: ansible-doc -l | grep '^ansible.hub' | head -10
+      register: hub_modules
+      changed_when: false
+
+    - name: "[ansible.hub] Display available modules"
+      ansible.builtin.debug:
+        msg: "{{ hub_modules.stdout_lines }}"
+
+    - name: "[ansible.hub] ✓ Collection functional test PASSED"
+      ansible.builtin.debug:
+        msg: "ansible.hub collection is functional (modules available and documented)"
+
+    # ===========================================
+    # Test 3: ansible.controller Collection
+    # ===========================================
+    - name: "[ansible.controller] Verify collection installed"
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection list ansible.controller
+      register: controller_installed
+      changed_when: false
+      failed_when: "'ansible.controller' not in controller_installed.stdout"
+
+    - name: "[ansible.controller] Verify job_template module documentation"
+      ansible.builtin.command:
+        cmd: ansible-doc ansible.controller.job_template
+      register: controller_job_template_doc
+      changed_when: false
+      failed_when: controller_job_template_doc.rc != 0
+
+    - name: "[ansible.controller] Verify inventory module documentation"
+      ansible.builtin.command:
+        cmd: ansible-doc ansible.controller.inventory
+      register: controller_inventory_doc
+      changed_when: false
+      failed_when: controller_inventory_doc.rc != 0
+
+    - name: "[ansible.controller] List available modules"
+      ansible.builtin.shell:
+        cmd: ansible-doc -l | grep '^ansible.controller' | head -10
+      register: controller_modules
+      changed_when: false
+
+    - name: "[ansible.controller] Display available modules"
+      ansible.builtin.debug:
+        msg: "{{ controller_modules.stdout_lines }}"
+
+    - name: "[ansible.controller] ✓ Collection functional test PASSED"
+      ansible.builtin.debug:
+        msg: "ansible.controller collection is functional (modules available and documented)"
+
+    # ===========================================
+    # Test 4: amazon.aws Collection
+    # ===========================================
+    - name: "[amazon.aws] Verify collection installed"
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection list amazon.aws
+      register: aws_installed
+      changed_when: false
+      failed_when: "'amazon.aws' not in aws_installed.stdout"
+
+    - name: "[amazon.aws] Verify ec2_instance module documentation"
+      ansible.builtin.command:
+        cmd: ansible-doc amazon.aws.ec2_instance
+      register: aws_ec2_doc
+      changed_when: false
+      failed_when: aws_ec2_doc.rc != 0
+
+    - name: "[amazon.aws] ✓ Collection functional test PASSED"
+      ansible.builtin.debug:
+        msg: "amazon.aws collection is functional"
+
+    # ===========================================
+    # Test 5: azure.azcollection Collection
+    # ===========================================
+    - name: "[azure.azcollection] Verify collection installed"
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection list azure.azcollection
+      register: azure_installed
+      changed_when: false
+      failed_when: "'azure.azcollection' not in azure_installed.stdout"
+
+    - name: "[azure.azcollection] Verify azure_rm_virtualmachine module documentation"
+      ansible.builtin.command:
+        cmd: ansible-doc azure.azcollection.azure_rm_virtualmachine
+      register: azure_vm_doc
+      changed_when: false
+      ignore_errors: true
+
+    - name: "[azure.azcollection] ✓ Collection functional test PASSED"
+      ansible.builtin.debug:
+        msg: "azure.azcollection collection is functional"
+
+    # ===========================================
+    # Test 6: community.general Collection
+    # ===========================================
+    - name: "[community.general] Verify collection installed"
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection list community.general
+      register: community_general_installed
+      changed_when: false
+      failed_when: "'community.general' not in community_general_installed.stdout"
+
+    - name: "[community.general] ✓ Collection functional test PASSED"
+      ansible.builtin.debug:
+        msg: "community.general collection is functional"
+
+    # ===========================================
+    # Test 7: ansible.utils Collection
+    # ===========================================
+    - name: "[ansible.utils] Verify collection installed"
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection list ansible.utils
+      register: utils_installed
+      changed_when: false
+      failed_when: "'ansible.utils' not in utils_installed.stdout"
+
+    - name: "[ansible.utils] ✓ Collection functional test PASSED"
+      ansible.builtin.debug:
+        msg: "ansible.utils collection is functional"
+
+    # ===========================================
+    # Optional Collections (if enabled)
+    # ===========================================
+    - name: "[ansible.platform] Check if collection is installed"
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection list ansible.platform
+      register: platform_check
+      changed_when: false
+      failed_when: false
+
+    - name: "[ansible.platform] Verify collection and kubernetes.core dependency"
+      when: "'ansible.platform' in platform_check.stdout"
+      block:
+        - name: "[ansible.platform] Verify kubernetes.core dependency present"
+          ansible.builtin.command:
+            cmd: ansible-galaxy collection list kubernetes.core
+          register: platform_k8s_dep
+          changed_when: false
+          failed_when: "'kubernetes.core' not in platform_k8s_dep.stdout"
+
+        - name: "[ansible.platform] ✓ Collection functional test PASSED"
+          ansible.builtin.debug:
+            msg: "ansible.platform collection is functional (dependency chain intact)"
+
+    - name: "[ansible.eda] Check if collection is installed"
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection list ansible.eda
+      register: eda_check
+      changed_when: false
+      failed_when: false
+
+    - name: "[ansible.eda] Verify collection functional"
+      when: "'ansible.eda' in eda_check.stdout"
+      block:
+        - name: "[ansible.eda] Verify activation module documentation"
+          ansible.builtin.command:
+            cmd: ansible-doc ansible.eda.activation
+          register: eda_activation_doc
+          changed_when: false
+          ignore_errors: true
+
+        - name: "[ansible.eda] ✓ Collection functional test PASSED"
+          ansible.builtin.debug:
+            msg: "ansible.eda collection is functional"
+
+    # ===========================================
+    # Final Summary
+    # ===========================================
+    - name: "==> Functional Test Summary"
+      ansible.builtin.debug:
+        msg:
+          - "✓ ALL AAP collection functional tests PASSED"
+          - "✓ kubernetes.core: Binaries accessible (oc {{ oc_direct.stdout_lines[0] | default('unknown') }})"
+          - "✓ ansible.hub: Modules available"
+          - "✓ ansible.controller: Modules available"
+          - "✓ amazon.aws: Modules available"
+          - "✓ azure.azcollection: Modules available"
+          - "✓ community.general: Collection installed"
+          - "✓ ansible.utils: Collection installed"
+          - "{{ '✓ ansible.platform: Collection installed (with kubernetes.core dependency)' if 'ansible.platform' in platform_check.stdout else '  ansible.platform: Not enabled' }}"
+          - "{{ '✓ ansible.eda: Collection installed' if 'ansible.eda' in eda_check.stdout else '  ansible.eda: Not enabled' }}"

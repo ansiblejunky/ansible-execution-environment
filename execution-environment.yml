@@ -30,6 +30,9 @@ additional_build_files:
   # Optional configs directory (ignored if empty). Place rhsm-activation.env here.
   - src: files/optional-configs
     dest: configs/optional
+  # Functional test playbook for AAP collections
+  - src: files/playbook.yml
+    dest: configs
   # Override install-from-bindep to ignore openshift-clients when repos are unavailable
   - src: scripts/install-from-bindep
     dest: scripts
@@ -45,7 +48,34 @@ additional_build_steps:
     - RUN echo PKGMGR = $PKGMGR, PYCMD = $PYCMD
     - RUN $PYCMD -m pip install --upgrade pip
     - COPY _build/configs/optional /_extras/optional
+    # Workaround for kubernetes.core collection bindep requirement
+    # The collection requests 'openshift-clients' RPM but this package is not available in UBI repos.
+    # We install oc/kubectl binaries via tarball instead (see Path B below).
+    # This creates a dummy package to satisfy the bindep requirement BEFORE builder phase runs.
+    - >
+      RUN echo "==> Workaround: Creating dummy openshift-clients package for kubernetes.core collection" &&
+      echo "    kubernetes.core requires 'openshift-clients' RPM (not in UBI repos)" &&
+      echo "    We provide oc/kubectl binaries via tarball installation instead" &&
+      $PKGMGR install -y rpm-build &&
+      mkdir -p /tmp/dummy-rpm/SPECS &&
+      echo "Name:           openshift-clients" > /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "Version:        0.0.1" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "Release:        1" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "Summary:        Dummy package - binaries provided via tarball" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "License:        MIT" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "BuildArch:      noarch" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "%description" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "Dummy package to satisfy kubernetes.core bindep requirement." >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "Actual oc/kubectl binaries installed via tarball. See ADR-0007." >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "%files" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      rpmbuild --define "_topdir /tmp/dummy-rpm" -bb /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      rpm -ivh /tmp/dummy-rpm/RPMS/noarch/openshift-clients-*.rpm &&
+      rm -rf /tmp/dummy-rpm &&
+      echo "    ✓ Dummy openshift-clients package installed"
 
+  prepend_galaxy:
     # Optional: Install OpenShift CLI (oc/kubectl) via Red Hat repos using subscription-manager
     # Provide credentials via files/optional-configs/rhsm-activation.env with:
     #   RH_ORG=your_org
@@ -167,13 +197,20 @@ additional_build_steps:
 
     # (Optional) Install Red Hat open-scap command line tool to run security scans on target systems and generate reports
     # - RUN $PKGMGR -y install openscap-scanner
-  prepend_galaxy:
+
     # Ansible Galaxy - critical for ansible-galaxy to work
     - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
 
     # (Optional) Windows Authentication - Kerberos
     # - COPY _build/configs/krb5.conf /etc/krb5.conf
+
   append_final:
+    # Copy oc/kubectl binaries from galaxy stage (installed via Path B tarball)
+    - COPY --from=galaxy /usr/local/bin/oc /usr/local/bin/oc
+    - COPY --from=galaxy /usr/local/bin/kubectl /usr/local/bin/kubectl
+    - RUN ln -sf /usr/local/bin/oc /usr/bin/oc && ln -sf /usr/local/bin/kubectl /usr/bin/kubectl
+    # Copy functional test playbook for AAP collections
+    - COPY _build/configs/playbook.yml /opt/playbook.yml
     # Verify installed packages have compatible dependencies
     # Logged issue https://github.com/ansible/ansible-builder/issues/416
     - RUN pip3 check
