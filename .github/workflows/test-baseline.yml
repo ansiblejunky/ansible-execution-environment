@@ -1,0 +1,89 @@
+# Test Baseline Execution Environment (No OpenShift Tooling)
+---
+name: Test Baseline EE (No OpenShift)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'execution-environment.yml'
+      - 'files/requirements.yml'
+      - 'files/bindep.txt'
+      - 'files/playbook.yml'
+      - '.github/workflows/test-baseline.yml'
+  pull_request:
+    paths:
+      - 'execution-environment.yml'
+      - 'files/requirements.yml'
+      - 'files/bindep.txt'
+      - 'files/playbook.yml'
+      - '.github/workflows/test-baseline.yml'
+  workflow_dispatch:
+
+env:
+  TARGET_NAME: ansible-ee-minimal
+  CONTAINER_ENGINE: podman
+  REDHAT_REGISTRY_USERNAME: ${{ secrets.REDHAT_REGISTRY_USERNAME }}
+  REDHAT_REGISTRY_PASSWORD: ${{ secrets.REDHAT_REGISTRY_PASSWORD }}
+
+jobs:
+  test-baseline:
+    name: Test Baseline Execution Environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install tooling (Podman + Ansible)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext-base podman
+          python -m pip install --upgrade pip
+          pip install ansible-builder ansible-navigator
+
+      - name: Log in to registry.redhat.io (Podman)
+        if: ${{ env.REDHAT_REGISTRY_USERNAME != '' && env.REDHAT_REGISTRY_PASSWORD != '' }}
+        env:
+          CONTAINER_ENGINE: ${{ env.CONTAINER_ENGINE }}
+        run: ./scripts/login-registry.sh $CONTAINER_ENGINE
+
+      - name: Ensure No OpenShift Configs
+        run: |
+          mkdir -p files/optional-configs
+          # Remove any OpenShift configs to ensure baseline build
+          rm -f files/optional-configs/oc-install.env
+          rm -f files/optional-configs/rhsm-activation.env
+          echo "Ensured baseline build without OpenShift tooling"
+
+      - name: Build Baseline Image
+        env:
+          ANSIBLE_HUB_TOKEN: ${{ secrets.ANSIBLE_HUB_TOKEN }}
+        run: |
+          make clean
+          TARGET_NAME="$TARGET_NAME" TARGET_TAG="test-baseline" CONTAINER_ENGINE=$CONTAINER_ENGINE \
+            make build
+
+      - name: Verify No OpenShift Binaries
+        run: |
+          echo "Verifying baseline image has no oc/kubectl binaries..."
+          if $CONTAINER_ENGINE run --rm "$TARGET_NAME:test-baseline" which oc >/dev/null 2>&1; then
+            echo "✗ Error: oc binary found in baseline image (should not exist)"
+            exit 1
+          fi
+          if $CONTAINER_ENGINE run --rm "$TARGET_NAME:test-baseline" which kubectl >/dev/null 2>&1; then
+            echo "✗ Error: kubectl binary found in baseline image (should not exist)"
+            exit 1
+          fi
+          echo "✓ Baseline image correctly has no oc/kubectl binaries"
+
+      - name: Run Standard Playbook Test
+        env:
+          ANSIBLE_HUB_TOKEN: ${{ secrets.ANSIBLE_HUB_TOKEN }}
+        run: |
+          TARGET_NAME="$TARGET_NAME" TARGET_TAG="test-baseline" CONTAINER_ENGINE=$CONTAINER_ENGINE \
+            make test

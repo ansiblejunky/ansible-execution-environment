@@ -1,0 +1,13 @@
+# Development dependencies for ansible-execution-environment
+# Install in venv: pip install -r requirements-dev.txt
+
+# Ansible Automation Platform tools
+ansible-builder>=3.0.0,<4.0.0
+ansible-navigator>=3.0.0,<4.0.0
+ansible-core>=2.15.13,<2.18.0
+
+# Linting and validation
+yamllint>=1.26.0,<2.0.0
+
+# Optional: Ansible linting (uncomment if needed)
+# ansible-lint>=6.0.0,<7.0.0

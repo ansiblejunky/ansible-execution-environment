@@ -1,0 +1,98 @@
+# Build and publish Ansible Execution Environment to Quay
+---
+name: Build and Publish EE (Podman)
+
+'on':
+  push:
+    branches: [main]
+    tags: ['v*', 'release-*']
+  workflow_dispatch:
+
+env:
+  # Change this to your Quay repository path: <org>/<repo>
+  # Or override via: TARGET_HUB, TARGET_NAME, TARGET_TAG
+  TARGET_NAME: ${{ secrets.TARGET_NAME || 'ansible-ee-minimal' }}
+  TARGET_TAG: ${{ secrets.TARGET_TAG || 'v5' }}
+  TARGET_HUB: ${{ secrets.TARGET_HUB || 'quay.io' }}
+  CONTAINER_ENGINE: podman
+
+jobs:
+  build-publish:
+    runs-on: ubuntu-latest
+    env:
+      TARGET_NAME: ${{ secrets.TARGET_NAME || 'ansible-ee-minimal' }}
+      TARGET_HUB: ${{ secrets.TARGET_HUB || 'quay.io' }}
+      CONTAINER_ENGINE: podman
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine Target Tag
+        id: tag
+        run: |
+          if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
+            # If it's a git tag, use it as the image tag
+            TAG="${{ github.ref_name }}"
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            # If it's main branch, use 'latest'
+            TAG="latest"
+          else
+            # For other branches or PRs, use branch name or 'dev'
+            TAG="${{ github.ref_name }}"
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Using image tag: ${TAG}"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install tooling (Podman + Ansible)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext-base podman
+          python -m pip install --upgrade pip
+          pip install ansible-builder ansible-navigator
+
+      - name: Log in to registry.redhat.io (Podman)
+        if: ${{ env.REDHAT_REGISTRY_USERNAME != '' && env.REDHAT_REGISTRY_PASSWORD != '' }}
+        env:
+          REDHAT_REGISTRY_USERNAME: ${{ secrets.REDHAT_REGISTRY_USERNAME }}
+          REDHAT_REGISTRY_PASSWORD: ${{ secrets.REDHAT_REGISTRY_PASSWORD }}
+        run: |
+          echo "$REDHAT_REGISTRY_PASSWORD" | podman login registry.redhat.io \
+            --username "$REDHAT_REGISTRY_USERNAME" --password-stdin
+
+      - name: Log in to Quay (Podman)
+        run: |
+          echo "$QUAY_PASSWORD" | podman login quay.io \
+            --username "$QUAY_USERNAME" --password-stdin
+        env:
+          QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+          QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+
+      - name: Setup OpenShift Tooling Config
+        run: |
+          mkdir -p files/optional-configs
+          echo "OC_VERSION=stable-4.21" > files/optional-configs/oc-install.env
+
+      - name: Build
+        env:
+          ANSIBLE_HUB_TOKEN: ${{ secrets.ANSIBLE_HUB_TOKEN }}
+        run: |
+          make clean
+          TARGET_NAME="${{ env.TARGET_NAME }}" TARGET_TAG="${{ steps.tag.outputs.tag }}" CONTAINER_ENGINE=$CONTAINER_ENGINE \
+            make build
+
+      - name: Test
+        env:
+          ANSIBLE_HUB_TOKEN: ${{ secrets.ANSIBLE_HUB_TOKEN }}
+        run: |
+          TARGET_NAME="${{ env.TARGET_NAME }}" TARGET_TAG="${{ steps.tag.outputs.tag }}" CONTAINER_ENGINE=$CONTAINER_ENGINE \
+            make test
+
+      - name: Publish
+        run: |
+          TARGET_NAME="${{ env.TARGET_NAME }}" TARGET_TAG="${{ steps.tag.outputs.tag }}" CONTAINER_ENGINE=$CONTAINER_ENGINE \
+            make publish

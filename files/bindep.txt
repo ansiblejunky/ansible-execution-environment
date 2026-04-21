@@ -18,6 +18,7 @@ rsync [platform:rpm]
 unzip [platform:rpm]
 tar   [platform:rpm]
 sudo  [platform:rpm]
+python3-pip [platform:rpm]
 
 # (Optional) Windows Authentication - Kerberos
 # https://docs.ansible.com/automation-controller/latest/html/administration/kerberos_auth.html
@@ -35,3 +36,11 @@ openldap-devel [platform:rpm]
 # This avoids errors that complain about python header files missing
 # 1/19/2024 package is not found when building on arm64 rhel machine!
 #python39-devel [platform:rpm]
+
+# OpenShift Client Tools (oc/kubectl)
+# NOTE: kubernetes.core collection requests 'openshift-clients' RPM package,
+#       but this package is NOT available in UBI repos (requires RHSM subscription).
+#       We install oc/kubectl via tarball in execution-environment.yml instead.
+#       See ADR-0007 and ADR-0005 for details.
+# DO NOT install openshift-clients RPM - we provide binaries via tarball
+#openshift-clients [platform:rpm]  # Provided via tarball installation (Path B)

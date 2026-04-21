@@ -1,0 +1,44 @@
+# llms.txt — LLM usage preferences for this repository
+# Spec: https://llmstxt.org (human-readable policy; parsers should be tolerant)
+
+version: 1
+owner: tosin2013
+contact: maintainers via GitHub Issues
+updated: 2025-09-15
+
+# General guidance
+# - This repository is open source; learning from docs and code is allowed.
+# - Do not ingest or retain secrets. Honor the disallow list below.
+
+allow:
+  - /
+
+disallow:
+  # Secrets and local tokens
+  - /token
+  - /files/optional-configs/
+
+  # Build outputs and temp artifacts
+  - /context/
+  - /collections/
+  - /site/
+  - /.venv-docs/
+  - /.mkdocs-server.log
+
+  # VCS internals
+  - /.git/
+
+# Priority documents for model context (agents may prefer these first):
+priority:
+  - /README.md
+  - /AGENTS.md
+  - /execution-environment.yml
+  - /Makefile
+  - /ansible-navigator.yml
+  - /docs/
+
+# Notes to LLM tools/agents:
+# - Use docs/how-to/enable-kubernetes-openshift.md for K8s/OpenShift setup.
+# - Use docs/reference/execution-environment-yaml.md for EE schema details.
+# - Do not request or store RHSM activation keys or Hub tokens.
+

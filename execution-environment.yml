@@ -8,8 +8,10 @@ build_arg_defaults:
   ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: '--ignore-certs'
 
 dependencies:
-  #ansible_core:
-  #  package_pip: ansible-core==2.14.4
+  ansible_core:
+    package_pip: ansible-core>=2.15.13
+  ansible_runner:
+    package_pip: ansible-runner>=2.4.1
   galaxy: files/requirements.yml
   python: files/requirements.txt
   system: files/bindep.txt
@@ -25,9 +27,19 @@ additional_build_files:
   # Ansible Galaxy - critical for ansible-galaxy to work
   - src: ansible.cfg
     dest: configs
-  # (Optional) Windows Authentication - Kerberos
-  #- src: files/krb5.conf
-  #  dest: configs
+  # Optional configs directory (ignored if empty). Place rhsm-activation.env here.
+  - src: files/optional-configs
+    dest: configs/optional
+  # Functional test playbook for AAP collections
+  - src: files/playbook.yml
+    dest: configs
+  # Override install-from-bindep to ignore openshift-clients when repos are unavailable
+  - src: scripts/install-from-bindep
+    dest: scripts
+  - src: scripts/assemble
+    dest: scripts
+    # - src: files/krb5.conf  # (Optional) Windows Authentication - Kerberos
+    #   dest: configs
 
 additional_build_steps:
   prepend_base:
@@ -35,6 +47,132 @@ additional_build_steps:
     - RUN cat /etc/os-release
     - RUN echo PKGMGR = $PKGMGR, PYCMD = $PYCMD
     - RUN $PYCMD -m pip install --upgrade pip
+    - COPY _build/configs/optional /_extras/optional
+    # Workaround for kubernetes.core collection bindep requirement
+    # The collection requests 'openshift-clients' RPM but this package is not available in UBI repos.
+    # We install oc/kubectl binaries via tarball instead (see Path B below).
+    # This creates a dummy package to satisfy the bindep requirement BEFORE builder phase runs.
+    - >
+      RUN echo "==> Workaround: Creating dummy openshift-clients package for kubernetes.core collection" &&
+      echo "    kubernetes.core requires 'openshift-clients' RPM (not in UBI repos)" &&
+      echo "    We provide oc/kubectl binaries via tarball installation instead" &&
+      $PKGMGR install -y rpm-build &&
+      mkdir -p /tmp/dummy-rpm/SPECS &&
+      echo "Name:           openshift-clients" > /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "Version:        0.0.1" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "Release:        1" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "Summary:        Dummy package - binaries provided via tarball" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "License:        MIT" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "BuildArch:      noarch" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "%description" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "Dummy package to satisfy kubernetes.core bindep requirement." >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "Actual oc/kubectl binaries installed via tarball. See ADR-0007." >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      echo "%files" >> /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      rpmbuild --define "_topdir /tmp/dummy-rpm" -bb /tmp/dummy-rpm/SPECS/openshift-clients.spec &&
+      rpm -ivh /tmp/dummy-rpm/RPMS/noarch/openshift-clients-*.rpm &&
+      rm -rf /tmp/dummy-rpm &&
+      echo "    ✓ Dummy openshift-clients package installed"
+
+  prepend_galaxy:
+    # Optional: Install OpenShift CLI (oc/kubectl) via Red Hat repos using subscription-manager
+    # Provide credentials via files/optional-configs/rhsm-activation.env with:
+    #   RH_ORG=your_org
+    #   RH_ACT_KEY=your_activation_key
+    # This block is conditional and will be skipped if creds are not provided.
+    - >
+      RUN RH_ENV="/_extras/optional/rhsm-activation.env" ; \
+          if [ -f "$RH_ENV" ]; then set -a; . "$RH_ENV"; set +a; fi ; \
+          if [ -n "$RH_ORG" ] && [ -n "$RH_ACT_KEY" ]; then \
+            echo "==> [Path A] Installing OpenShift client via RHSM" && \
+            echo "    Organization: $RH_ORG" && \
+            (command -v subscription-manager >/dev/null 2>&1 || $PKGMGR -y install subscription-manager || true) && \
+            echo "==> Registering with Red Hat Subscription Manager..." && \
+            subscription-manager register --org="$RH_ORG" --activationkey="$RH_ACT_KEY" && \
+            echo "==> Attaching subscriptions..." && \
+            subscription-manager attach --auto || true && \
+            echo "==> Checking subscription status..." && \
+            subscription-manager status || echo "WARNING: Subscription status check failed" && \
+            ARCH=$(uname -m) && \
+            echo "==> Enabling OpenShift client repo for RHEL 9 ${ARCH}..." && \
+            REPO_ENABLED=0 && \
+            (subscription-manager repos --enable="rhocp-4.21-for-rhel-9-${ARCH}-rpms" && REPO_ENABLED=1 && echo "✓ Enabled rhocp-4.21") || \
+            (subscription-manager repos --enable="rhocp-4.20-for-rhel-9-${ARCH}-rpms" && REPO_ENABLED=1 && echo "✓ Enabled rhocp-4.20") || \
+            (subscription-manager repos --enable="rhocp-4.19-for-rhel-9-${ARCH}-rpms" && REPO_ENABLED=1 && echo "✓ Enabled rhocp-4.19") || \
+            echo "WARNING: No OpenShift client repos could be enabled" && \
+            if [ "$REPO_ENABLED" -eq 1 ]; then \
+              echo "==> Installing openshift-clients package..." && \
+              $PKGMGR -y install openshift-clients && \
+              echo "==> Verifying installation..." && \
+              oc version --client && \
+              kubectl version --client && \
+              echo "✓ Path A (RHSM) installation successful" ; \
+            else \
+              echo "ERROR: Path A (RHSM) failed - no repo enabled" ; \
+            fi ; \
+          else \
+            echo "==> Skipping Path A (no RH_ORG/RH_ACT_KEY provided)" ; \
+          fi
+
+    # Optional: Install oc/kubectl from tarball (no RHSM required)
+    # Provide files/optional-configs/oc-install.env with either:
+    #   OC_VERSION=stable-4.21   # or latest-4.21, v4.21.0, etc.
+    #   # or provide a direct URL
+    #   # OC_URL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/v4.21.0/openshift-client-linux.tar.gz
+    - >
+      RUN OC_ENV="/_extras/optional/oc-install.env" ; \
+          if [ -f "$OC_ENV" ]; then set -a; . "$OC_ENV"; set +a; fi ; \
+          if [ -n "$OC_URL" ] || [ -n "$OC_VERSION" ]; then \
+            echo "==> [Path B] Installing oc/kubectl from tarball" && \
+            echo "    OC_VERSION=$OC_VERSION" && \
+            echo "    OC_URL=$OC_URL" && \
+            URL="${OC_URL:-https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OC_VERSION}/openshift-client-linux.tar.gz}" && \
+            echo "    Final URL=$URL" && \
+            echo "==> Installing dependencies (curl, tar)..." && \
+            (rpm -e --nodeps curl-minimal 2>/dev/null || true) && \
+            $PKGMGR -y install curl tar --setopt=tsflags=nodocs && \
+            echo "==> Downloading tarball (with retries)..." && \
+            DOWNLOAD_SUCCESS=0 && \
+            for ATTEMPT in 1 2 3; do \
+              echo "    Attempt $ATTEMPT/3..." && \
+              if curl -L --fail --retry 3 --retry-delay 5 --max-time 300 \
+                      -o /tmp/oc.tgz "$URL" 2>&1 | tee /tmp/curl.log | tail -10; then \
+                DOWNLOAD_SUCCESS=1 && \
+                echo "✓ Download successful" && \
+                break ; \
+              else \
+                echo "WARNING: Download attempt $ATTEMPT failed" && \
+                sleep 5 ; \
+              fi ; \
+            done && \
+            if [ "$DOWNLOAD_SUCCESS" -eq 0 ]; then \
+              echo "ERROR: Failed to download after 3 attempts" && \
+              cat /tmp/curl.log && \
+              exit 1 ; \
+            fi && \
+            echo "==> Verifying tarball integrity..." && \
+            if ! tar -tzf /tmp/oc.tgz >/dev/null 2>&1; then \
+              echo "ERROR: Downloaded tarball is corrupted" && \
+              exit 1 ; \
+            fi && \
+            echo "✓ Tarball integrity verified" && \
+            echo "==> Extracting tarball..." && \
+            tar -C /usr/local/bin -xzf /tmp/oc.tgz oc kubectl && \
+            echo "==> Setting executable permissions..." && \
+            chmod +x /usr/local/bin/oc /usr/local/bin/kubectl && \
+            echo "==> Creating symlinks in /usr/bin for compatibility..." && \
+            ln -sf /usr/local/bin/oc /usr/bin/oc && \
+            ln -sf /usr/local/bin/kubectl /usr/bin/kubectl && \
+            echo "==> Verifying installation..." && \
+            /usr/local/bin/oc version --client && \
+            /usr/local/bin/kubectl version --client && \
+            echo "✓ Path B (Tarball) installation successful" && \
+            echo "==> Cleanup..." && \
+            rm -f /tmp/oc.tgz /tmp/curl.log ; \
+          else \
+            echo "==> Skipping Path B (no OC_URL/OC_VERSION)" ; \
+          fi
 
     # (Optional) Install Red Hat OpenShift client tools by enabling repo (prepare with manual steps below)
     # https://access.redhat.com/solutions/6985157
@@ -42,33 +180,48 @@ additional_build_steps:
     # subscription-manager attach --pool=`subscription-manager list --available --matches '*OpenShift*' | grep "Pool ID" | awk '{print $3}'`
     # subscription-manager repos --list | grep rhocp-4.14
     # (not needed) subscription-manager repos --enable="rhocp-4.12-for-rhel-9-x86_64-rpms"
-    #- ENV PKGMGR_OPTS "--nodocs --setopt install_weak_deps=0 --enablerepo=rhocp-4.14-for-rhel-9-aarch64-rpms"
+    # - ENV PKGMGR_OPTS "--nodocs --setopt install_weak_deps=0 --enablerepo=rhocp-4.14-for-rhel-9-aarch64-rpms"
 
     # (Optional) Install Microsoft azure-cli command line tool (needs dnf to install from url)
     # https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=dnf
-    #- >
-    #  RUN $PKGMGR install -y dnf &&
-    #  rpm --import https://packages.microsoft.com/keys/microsoft.asc &&
-    #  dnf -y install -y https://packages.microsoft.com/config/rhel/9.0/packages-microsoft-prod.rpm &&
-    #  $PKGMGR -y install azure-cli
+    # - >
+    #   RUN $PKGMGR install -y dnf &&
+    #   rpm --import https://packages.microsoft.com/keys/microsoft.asc &&
+    #   dnf -y install -y https://packages.microsoft.com/config/rhel/9.0/packages-microsoft-prod.rpm &&
+    #   $PKGMGR -y install azure-cli
 
     # (Optional) Install HashiCorp Packer (/usr/bin/packer)
-    #- >
-    #  RUN curl https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo --output /etc/yum.repos.d/hashicorp.repo &&
-    #  $PKGMGR -y install packer
+    # - >
+    #   RUN curl https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo --output /etc/yum.repos.d/hashicorp.repo &&
+    #   $PKGMGR -y install packer
 
     # (Optional) Install Red Hat open-scap command line tool to run security scans on target systems and generate reports
-    #- RUN $PKGMGR -y install openscap-scanner
-  prepend_galaxy:
-      # Ansible Galaxy - critical for ansible-galaxy to work
+    # - RUN $PKGMGR -y install openscap-scanner
+
+    # Ansible Galaxy - critical for ansible-galaxy to work
     - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
 
     # (Optional) Windows Authentication - Kerberos
-    #- COPY _build/configs/krb5.conf /etc/krb5.conf
+    # - COPY _build/configs/krb5.conf /etc/krb5.conf
+
   append_final:
+    # Copy oc/kubectl binaries from galaxy stage (installed via Path B tarball)
+    - COPY --from=galaxy /usr/local/bin/oc /usr/local/bin/oc
+    - COPY --from=galaxy /usr/local/bin/kubectl /usr/local/bin/kubectl
+    - RUN ln -sf /usr/local/bin/oc /usr/bin/oc && ln -sf /usr/local/bin/kubectl /usr/bin/kubectl
+    # Copy functional test playbook for AAP collections
+    - COPY _build/configs/playbook.yml /opt/playbook.yml
     # Verify installed packages have compatible dependencies
     # Logged issue https://github.com/ansible/ansible-builder/issues/416
     - RUN pip3 check
+    # Optional: clean RHSM registration and repo files if present
+    - >
+      RUN if command -v subscription-manager >/dev/null 2>&1; then \
+            subscription-manager unregister || true && \
+            subscription-manager clean || true && \
+            rm -f /etc/yum.repos.d/redhat.repo && \
+            rm -rf /etc/rhsm/* ; \
+          fi
     # Clean up
     - >
       RUN $PKGMGR update -y &&

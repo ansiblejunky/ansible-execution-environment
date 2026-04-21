@@ -5,25 +5,64 @@ Example repository to build Ansible Execution Environments using a Makefile.
 TODO: Update docs to leverage new PIP_INDEX_URL environment variable option
 https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies-ansible-execution-environments#python_dependency_management
 
+## Documentation
+
+- Docs Home: [docs/index.md](docs/index.md)
+- Tutorials: [Getting Started](docs/tutorials/getting-started.md)
+- How-To Guides: [Test Your EE](docs/how-to/testing-execution-environment.md), [Advanced Tasks](docs/how-to/advanced-usage.md), [CI/CD (Podman + Quay)](docs/how-to/ci-cd.md), [Build Docs Locally](docs/how-to/build-docs-locally.md)
+- How-To: [Enable Kubernetes and OpenShift](docs/how-to/enable-kubernetes-openshift.md)
+- How-To: [Troubleshoot EE Builds](docs/how-to/troubleshoot-ee-builds.md)
+- Reference: [Tooling Reference](docs/reference/tooling.md)
+- Reference: [Optional Configs and Secrets](docs/reference/optional-configs-and-secrets.md)
+- Reference: [Make Targets and Variables](docs/reference/make-targets.md)
+- Explanation: [Concepts](docs/explanation/concepts.md), [Technology Stack](docs/explanation/technology-stack.md), [Design Decisions](docs/explanation/design-decisions.md)
+
+## Prerequisites
+
+**Required** (enforced by `make setup`):
+- **Python 3.10+** (Python 3.11 recommended on RHEL 9) - [ADR-0006](docs/adrs/0006-development-environment-setup.md)
+  ```bash
+  # Install on RHEL 9
+  sudo dnf install -y python3.11 python3.11-pip python3.11-devel
+  ```
+- **Podman** (container runtime)
+- **Git** (version control)
+- **System packages**: jq, gettext (for envsubst)
+
+**Optional**:
+- Red Hat Automation Hub token (for certified collections)
+- Red Hat subscription (for RHSM-based OpenShift client installation)
+
 ## Quick Start
 
 - Navigate to build server
+- **Install Python 3.11** (see Prerequisites above)
+- Container engine: Podman is used throughout this repo and CI.
 - Optionally provision build server using [script](files/provision.sh)
 - Clone this repository
+- **Verify environment setup:** `make setup` (creates venv, checks for required tools)
 - Customize
   - Edit dependencies `requirements.yml`, `requirements.txt`, `bindep.txt`
-  - Set token environment variable `ANSIBLE_HUB_TOKEN`
+  - Set token environment variable `ANSIBLE_HUB_TOKEN` (only needed for build/token targets)
   - Edit `execution-environment.yml` accordingly
   - Edit `Makefile` variables
 - Cleanup with `make clean`
-- Test token with `make token`
-- Build it `make build`
-- Test it `make test`
+- Test token with `make token` (requires `ANSIBLE_HUB_TOKEN`)
+- Build it `make build` (requires `ANSIBLE_HUB_TOKEN`)
+- Test it `make test` (does not require token - uses locally built image)
 - Inspect it `make inspect`
 - Review it `make info`
 - (Optional) Look inside `make shell`
 - Publish it `make publish`
 - Enjoy your day
+
+**Key Insights:**
+- **First-time setup:** Run `make setup` to create venv and verify your environment
+- **Python 3.11 REQUIRED:** `make setup` will fail if Python 3.10+ not found ([ADR-0006](docs/adrs/0006-development-environment-setup.md))
+- **Virtual environment:** All development tools installed in `.venv/` (activate with `source .venv/bin/activate`)
+- **Token requirements:** Only `make build` and `make token` require `ANSIBLE_HUB_TOKEN`
+- **System dependencies:** The minimal base image requires `python3-pip` in `bindep.txt`
+- **Testing:** The `make test` target uses `--pull-policy never` to use locally built images
 
 ## Find and Test Image
 

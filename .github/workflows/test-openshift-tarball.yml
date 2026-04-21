@@ -1,0 +1,90 @@
+# Test OpenShift/Kubernetes Tooling - Path B (Tarball Install)
+---
+name: Test OpenShift Tooling - Tarball (Path B)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'execution-environment.yml'
+      - 'files/requirements.yml'
+      - 'files/bindep.txt'
+      - 'scripts/install-from-bindep'
+      - 'scripts/assemble'
+      - 'scripts/test-openshift-tooling.sh'
+      - '.github/workflows/test-openshift-tarball.yml'
+  pull_request:
+    paths:
+      - 'execution-environment.yml'
+      - 'files/requirements.yml'
+      - 'files/bindep.txt'
+      - 'scripts/install-from-bindep'
+      - 'scripts/assemble'
+      - 'scripts/test-openshift-tooling.sh'
+      - '.github/workflows/test-openshift-tarball.yml'
+  workflow_dispatch:
+
+env:
+  TARGET_NAME: ansible-ee-minimal
+  CONTAINER_ENGINE: podman
+  REDHAT_REGISTRY_USERNAME: ${{ secrets.REDHAT_REGISTRY_USERNAME }}
+  REDHAT_REGISTRY_PASSWORD: ${{ secrets.REDHAT_REGISTRY_PASSWORD }}
+
+jobs:
+  test-openshift-tarball:
+    name: Test OpenShift Tarball (Path B)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install tooling (Podman + Ansible)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext-base podman
+          python -m pip install --upgrade pip
+          pip install ansible-builder ansible-navigator
+
+      - name: Log in to registry.redhat.io (Podman)
+        if: ${{ env.REDHAT_REGISTRY_USERNAME != '' && env.REDHAT_REGISTRY_PASSWORD != '' }}
+        env:
+          CONTAINER_ENGINE: ${{ env.CONTAINER_ENGINE }}
+        run: ./scripts/login-registry.sh $CONTAINER_ENGINE
+
+      - name: Setup Path B (Tarball) Configuration
+        run: |
+          mkdir -p files/optional-configs
+          echo "OC_VERSION=stable-4.21" > files/optional-configs/oc-install.env
+          echo "Created oc-install.env for Path B testing with OC_VERSION=stable-4.21"
+          # Ensure no RHSM config exists
+          rm -f files/optional-configs/rhsm-activation.env
+          # Keep Kubernetes collections commented out for Path B (binaries only, no collections)
+          sed -i 's/^  - name: kubernetes.core/#  - name: kubernetes.core/' files/requirements.yml || true
+          sed -i 's/^  - name: redhat.openshift/#  - name: redhat.openshift/' files/requirements.yml || true
+
+      - name: Build with Path B (Tarball)
+        env:
+          ANSIBLE_HUB_TOKEN: ${{ secrets.ANSIBLE_HUB_TOKEN }}
+        run: |
+          make clean
+          TARGET_NAME="$TARGET_NAME" TARGET_TAG="test-tarball" CONTAINER_ENGINE=$CONTAINER_ENGINE \
+            make build-openshift-tarball
+
+      - name: Test Path B (Tarball)
+        env:
+          ANSIBLE_HUB_TOKEN: ${{ secrets.ANSIBLE_HUB_TOKEN }}
+        run: |
+          TARGET_NAME="$TARGET_NAME" TARGET_TAG="test-tarball" CONTAINER_ENGINE=$CONTAINER_ENGINE \
+            make test-openshift-tooling
+
+      - name: Run Standard Playbook Test
+        env:
+          ANSIBLE_HUB_TOKEN: ${{ secrets.ANSIBLE_HUB_TOKEN }}
+        run: |
+          TARGET_NAME="$TARGET_NAME" TARGET_TAG="test-tarball" CONTAINER_ENGINE=$CONTAINER_ENGINE \
+            make test

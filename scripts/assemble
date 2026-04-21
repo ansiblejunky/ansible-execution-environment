@@ -1,0 +1,104 @@
+#!/bin/bash
+set -ex
+
+RELEASE=$(source /etc/os-release; echo $ID)
+
+PKGMGR="${PKGMGR:-}"
+PKGMGR_OPTS="${PKGMGR_OPTS:-}"
+PKGMGR_PRESERVE_CACHE="${PKGMGR_PRESERVE_CACHE:-}"
+
+PYCMD="${PYCMD:=/usr/bin/python3}"
+PIPCMD="${PIPCMD:=$PYCMD -m pip}"
+
+if [ -z $PKGMGR ]; then
+    PKGMGR=/usr/bin/dnf
+    if [ -f "/usr/bin/microdnf" ]; then
+        PKGMGR=/usr/bin/microdnf
+    fi
+fi
+
+if [ "$PKGMGR" = "/usr/bin/microdnf" ] && [ -z "${PKGMGR_OPTS}" ]; then
+    PKGMGR_OPTS="--nodocs --setopt install_weak_deps=0"
+fi
+
+mkdir -p /output/bindep /output/wheels /tmp/src
+cd /tmp/src
+
+function install_bindep {
+    if [ -f bindep.txt ] ; then
+        bindep -l newline | sort >> /output/bindep/run.txt || true
+        if [ "$RELEASE" == "centos" ] ; then
+            bindep -l newline -b epel | sort >> /output/bindep/stage.txt || true
+            grep -Fxvf /output/bindep/run.txt /output/bindep/stage.txt >> /output/bindep/epel.txt || true
+            rm -rf /output/bindep/stage.txt
+        fi
+        compile_packages=$(bindep -b compile || true)
+        # Filter out packages we satisfy via non-RPM methods
+        compile_packages=$(echo "$compile_packages" | sed -E 's/(^| )openshift-clients( |$)/ /g' | xargs -r echo)
+        if [ ! -z "$compile_packages" ] ; then
+            $PKGMGR install -y $PKGMGR_OPTS ${compile_packages}
+        fi
+    fi
+}
+
+function install_wheels {
+    if [ -f /tmp/src/build-requirements.txt ] && [ ! -f /tmp/src/.build-requirements.txt ] ; then
+        $PIPCMD install $CONSTRAINTS $PIP_OPTS --no-cache -r /tmp/src/build-requirements.txt
+        touch /tmp/src/.build-requirements.txt
+    fi
+    if [ -f setup.py ] ; then
+        $PYCMD setup.py sdist bdist_wheel -d /output/wheels
+    fi
+    if [ -f /tmp/src/requirements.txt ] && [ ! -f /output/requirements.txt ] ; then
+        $PIPCMD install $CONSTRAINTS $PIP_OPTS --cache-dir=/output/wheels -r /tmp/src/requirements.txt
+        cp /tmp/src/requirements.txt /output/requirements.txt
+    fi
+    if [ $(ls -1 /output/wheels/*whl 2>/dev/null | wc -l) -gt 0 ]; then
+        $PIPCMD uninstall -y /output/wheels/*.whl
+        $PIPCMD install $CONSTRAINTS $PIP_OPTS --cache-dir=/output/wheels /output/wheels/*whl
+    fi
+}
+
+PACKAGES=$*
+PIP_OPTS="${PIP_OPTS-}"
+
+install_bindep
+
+for sibling in ${ZUUL_SIBLINGS:-}; do
+    pushd .zuul-siblings/${sibling}
+    install_bindep
+    popd
+done
+
+$PYCMD -m venv /tmp/venv --system-site-packages --without-pip
+source /tmp/venv/bin/activate
+
+if [ -f /tmp/src/upper-constraints.txt ] ; then
+    cp /tmp/src/upper-constraints.txt /output/upper-constraints.txt
+    CONSTRAINTS="-c /tmp/src/upper-constraints.txt"
+fi
+
+if [[ $PACKAGES ]] ; then
+    $PIPCMD install $CONSTRAINTS $PIP_OPTS --cache-dir=/output/wheels $PACKAGES
+    for package in $PACKAGES ; do
+      echo "$package" >> /output/packages.txt
+    done
+else
+    install_wheels
+fi
+
+for sibling in ${ZUUL_SIBLINGS:-}; do
+    pushd .zuul-siblings/${sibling}
+    install_wheels
+    popd
+done
+
+if [ -z $PKGMGR_PRESERVE_CACHE ]; then
+  $PKGMGR clean all
+  rm -rf /var/cache/{dnf,yum}
+fi
+
+rm -rf /var/lib/dnf/history.*
+rm -rf /var/log/{dnf.*,hawkey.log}
+rm -rf /tmp/venv
+

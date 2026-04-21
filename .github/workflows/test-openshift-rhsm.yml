@@ -1,0 +1,110 @@
+# Test OpenShift/Kubernetes Tooling - Path A (RHSM/RPM Install)
+---
+name: Test OpenShift Tooling - RHSM (Path A)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'execution-environment.yml'
+      - 'files/requirements.yml'
+      - 'files/bindep.txt'
+      - 'scripts/install-from-bindep'
+      - 'scripts/assemble'
+      - 'scripts/test-openshift-tooling.sh'
+      - '.github/workflows/test-openshift-rhsm.yml'
+  pull_request:
+    paths:
+      - 'execution-environment.yml'
+      - 'files/requirements.yml'
+      - 'files/bindep.txt'
+      - 'scripts/install-from-bindep'
+      - 'scripts/assemble'
+      - 'scripts/test-openshift-tooling.sh'
+      - '.github/workflows/test-openshift-rhsm.yml'
+  workflow_dispatch:
+
+env:
+  TARGET_NAME: ansible-ee-minimal
+  CONTAINER_ENGINE: podman
+
+jobs:
+  test-openshift-rhsm:
+    name: Test OpenShift RHSM (Path A)
+    runs-on: ubuntu-latest
+    env:
+      RH_ORG: ${{ secrets.RH_ORG }}
+      RH_ACT_KEY: ${{ secrets.RH_ACT_KEY }}
+      REDHAT_REGISTRY_USERNAME: ${{ secrets.REDHAT_REGISTRY_USERNAME }}
+      REDHAT_REGISTRY_PASSWORD: ${{ secrets.REDHAT_REGISTRY_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for RHSM Credentials
+        id: check-creds
+        run: |
+          if [ -z "$RH_ORG" ] || [ -z "$RH_ACT_KEY" ]; then
+            echo "missing-creds=true" >> $GITHUB_OUTPUT
+            echo "⚠ Skipping: RH_ORG and RH_ACT_KEY secrets not configured"
+            exit 0
+          fi
+          echo "missing-creds=false" >> $GITHUB_OUTPUT
+
+      - name: Set up Python
+        if: steps.check-creds.outputs.missing-creds == 'false'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install tooling (Podman + Ansible)
+        if: steps.check-creds.outputs.missing-creds == 'false'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext-base podman
+          python -m pip install --upgrade pip
+          pip install ansible-builder ansible-navigator
+
+      - name: Log in to registry.redhat.io (Podman)
+        if: ${{ steps.check-creds.outputs.missing-creds == 'false' && env.REDHAT_REGISTRY_USERNAME != '' && env.REDHAT_REGISTRY_PASSWORD != '' }}
+        env:
+          CONTAINER_ENGINE: ${{ env.CONTAINER_ENGINE }}
+        run: ./scripts/login-registry.sh $CONTAINER_ENGINE
+
+      - name: Setup Path A (RHSM) Configuration
+        if: steps.check-creds.outputs.missing-creds == 'false'
+        run: |
+          mkdir -p files/optional-configs
+          echo "RH_ORG=$RH_ORG" > files/optional-configs/rhsm-activation.env
+          echo "RH_ACT_KEY=$RH_ACT_KEY" >> files/optional-configs/rhsm-activation.env
+          echo "Created rhsm-activation.env for Path A testing"
+          # Ensure no tarball config exists
+          rm -f files/optional-configs/oc-install.env
+          # Uncomment Kubernetes collections for Path A (RHSM enables the repos)
+          sed -i 's/^  # - name: kubernetes.core/  - name: kubernetes.core/' files/requirements.yml || true
+          sed -i 's/^  # - name: redhat.openshift/  - name: redhat.openshift/' files/requirements.yml || true
+
+      - name: Build with Path A (RHSM)
+        if: steps.check-creds.outputs.missing-creds == 'false'
+        env:
+          ANSIBLE_HUB_TOKEN: ${{ secrets.ANSIBLE_HUB_TOKEN }}
+        run: |
+          make clean
+          TARGET_NAME="$TARGET_NAME" TARGET_TAG="test-rhsm" CONTAINER_ENGINE=$CONTAINER_ENGINE \
+            make build-openshift-rhsm
+
+      - name: Test Path A (RHSM)
+        if: steps.check-creds.outputs.missing-creds == 'false'
+        env:
+          ANSIBLE_HUB_TOKEN: ${{ secrets.ANSIBLE_HUB_TOKEN }}
+        run: |
+          TARGET_NAME="$TARGET_NAME" TARGET_TAG="test-rhsm" CONTAINER_ENGINE=$CONTAINER_ENGINE \
+            make test-openshift-tooling
+
+      - name: Run Standard Playbook Test
+        if: steps.check-creds.outputs.missing-creds == 'false'
+        env:
+          ANSIBLE_HUB_TOKEN: ${{ secrets.ANSIBLE_HUB_TOKEN }}
+        run: |
+          TARGET_NAME="$TARGET_NAME" TARGET_TAG="test-rhsm" CONTAINER_ENGINE=$CONTAINER_ENGINE \
+            make test
