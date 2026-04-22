@@ -2,57 +2,29 @@
 
 Example repository to build and manage multiple Ansible Execution Environments.
 
-## Tasks
+## General guidance
 
-TODO: Update docs to leverage new PIP_INDEX_URL environment variable option
-https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies-ansible-execution-environments#python_dependency_management
+If you need the [openshift-clients](https://access.redhat.com/solutions/6985157) package, then download the rpm from [Red Hat Customer Portal](https://access.redhat.com/downloads/content/openshift-clients/4.12.0-202306230041.p0.gea7c11a.assembly.stream.el8/x86_64/fd431d51/package) and save into `files/openshift-clients.rpm`.
+  
+[pip check](https://ansible.readthedocs.io/projects/builder/en/latest/scenario_guides/scenario_pip_check/) is used to verify installed Python packages.
 
-TODO: Add info about podman signatures parameter `--remove-signatures`
-The error message "Copying this image would require changing layer representation" in Podman typically arises when attempting to push or transfer an image that has certain characteristics, such as being signed or having a specific digest requirement at the destination, which would be invalidated by a change in its internal layer representation during the copy operation.
+Custom python versions can be used. Leverage this [developers](https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies-ansible-execution-environments) link for more information.
 
-TODO: Add info about openshift-clients package
-  # Adding openshift-clients https://access.redhat.com/solutions/6985157
-  # Download the rpm from Red Hat Customer Portal and save into ee-config/openshift-clients.rpm
-  # https://access.redhat.com/downloads/content/openshift-clients/4.12.0-202306230041.p0.gea7c11a.assembly.stream.el8/x86_64/fd431d51/package
-
-TODO: Add info about pip check
-    # Verify installed Python packages
-    # https://ansible.readthedocs.io/projects/builder/en/latest/scenario_guides/scenario_pip_check/
-    - RUN $PYCMD -m pip check
-
-TODO: Add info about custom python version
-https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies-ansible-execution-environments
-dependencies:
-  python_interpreter:
-    package_system: "python310"
-    python_path: "/usr/bin/python3.10" 
-
-TODO: Add info about passing environment vars (galaxy vars)
-https://developers.redhat.com/articles/2025/01/23/strategies-eliminating-ansible-hardcoded-credentials#manageability
-
-TODO: Describe scripts
-```shell
-# Prepare environment variables
-export AAP_TOKEN=<your_token>
-source 00-envs-console.sh
-
-# Cleanup local files and images
-./01-clean.sh
-
-
-```
+For more info about passing environment vars (galaxy vars) leverage this [developers](https://developers.redhat.com/articles/2025/01/23/strategies-eliminating-ansible-hardcoded-credentials#manageability) link.
 
 ## Quick Start
 
 - Initialize
   - Navigate to build server
-  - Clone your repository
+  - Pull this repository
   - (Optional) Provision build server using [script](provision.sh) to install required packages
-- Prepare `source ./00-prepare.sh ee-config`
+- Prepare `source 00-prepare.sh <target_name> [hub_host]`
 - Build `./01-build.sh`
 - Publish `./02-publish.sh`
 
 ## Dependency Testing
+
+Optional stuff to test any dependency issues.
 
 ```shell
 # Start shell inside base image container
@@ -126,7 +98,7 @@ system:
 
 ### Regression Testing
 
-We can test that everything is working by running an Ansible Playbook in the image using `ansible-navigator`. The tool launches the container, runs the playbook and shows an interactive screen where you can watch the playbook run through. To quit the tool, use similar mechanism `:q!` like within a `vi` editor.
+Optional, but useful - we can test that everything is working by running an Ansible Playbook in the image using `ansible-navigator`. The tool launches the container, runs the playbook and shows an interactive screen where you can watch the playbook run through. To quit the tool, use similar mechanism `:q!` like within a `vi` editor.
 
 ```shell
 # Run playbook to test basic operations against new image
@@ -170,6 +142,8 @@ podman run -it -v $PWD:/opt/ansible:z registry.redhat.io/ansible-automation-plat
 ansible-builder build --verbosity 3 --container-runtime=podman --tag ansible-ee:5.0
 
 ```
+
+- The error message "Copying this image would require changing layer representation" in Podman typically arises when attempting to push or transfer an image that has certain characteristics, such as being signed or having a specific digest requirement at the destination, which would be invalidated by a change in its internal layer representation during the copy operation. You might want to consider adding the parameter `--remove-signatures` to the podman command.
 
 - Change the yum and pip repositories within the base images:
 
@@ -235,7 +209,7 @@ The following links can help with learning about containers to building ansible 
 - [Best practices for building images that pass Red Hat Container Certification](https://developers.redhat.com/articles/2021/11/11/best-practices-building-images-pass-red-hat-container-certification)
 - [How to build multi-architecture container images](https://developers.redhat.com/articles/2023/11/03/how-build-multi-architecture-container-images)
 - [How to change Default execution environment or Control Plane Execution Environment](https://access.redhat.com/solutions/7116964)
-
+- [How to use custom PIP repository with PIP_INDEX_URL environment variable](https://developers.redhat.com/articles/2025/01/27/how-manage-python-dependencies-ansible-execution-environments#python_dependency_management)
 - Security
   - [Using Snyk and Podman to scan container images from development to deployment](https://www.redhat.com/en/blog/using-snyk-and-podman-scan-container-images-development-deployment)
   - [DevSecOps: Image scanning in your pipelines using quay.io scanner](https://www.redhat.com/sysadmin/using-quayio-scanner)
