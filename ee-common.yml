@@ -1,0 +1,89 @@
+---
+# Ansible Builder Execution Environment
+version: 3
+build_arg_defaults:
+  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: '--ignore-certs -vvv'
+options:
+  package_manager_path: /usr/bin/dnf
+images:
+  base_image:
+    name: docker.io/redhat/ubi9:latest
+
+dependencies:
+  python_interpreter:
+    package_system: "python3.11 python3.11-devel"
+    python_path: "/usr/bin/python3.11" 
+  ansible_core:
+    package_pip: ansible-core
+  ansible_runner:
+    package_pip: ansible-runner
+  galaxy:
+    collections:
+      - name: ansible.utils
+      - name: community.general
+
+  python:
+    - psutil
+    - six
+    # ARA plugin
+    # https://ara.recordsansible.org/blog/2021/12/23/recording-ansible-playbooks-from-awx-with-ara/
+    - ara
+
+  system:
+    - gcc [platform:rpm]
+    #- systemd-devel [platform:rpm]
+    #- pkgconf-pkg-config [platform:rpm]
+    #- krb5-libs [platform:rpm] # Required by gssapi
+    #- krb5-devel [platform:rpm] # Required by gssapi
+    # Optional, but useful to have in EE
+    # - git [platform:rpm]
+    # - wget [platform:rpm]
+    # - curl [platform:rpm]
+    # - jq [platform:rpm]
+    # - rsync [platform:rpm]
+    # - unzip [platform:rpm]
+    # - tar [platform:rpm]
+    # - sudo [platform:rpm]
+    # (Optional) Dependencies for pycurl and python-ldap
+    # - libcurl-devel 
+    # - curl-devel 
+    # - openssl-devel 
+    # - openldap-devel 
+    # - libssh-devel
+
+# additional_build_files:
+#   - src: files/openshift-clients.rpm
+#     dest: configs
+
+additional_build_steps:
+  prepend_base:
+    - RUN cat /etc/os-release
+    # (Optional) HashiCorp Packer for building machine and container images
+    - >
+     RUN curl https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo --output /etc/yum.repos.d/hashicorp.repo &&
+     $PKGMGR -y install packer
+
+    # (Optional) Red Hat open-scap tool to run security scans on target systems and generate reports
+    - RUN $PKGMGR -y install openscap-scanner
+
+  append_base:
+    - RUN $PYCMD -m pip install --upgrade pip setuptools wheel
+
+  prepend_galaxy:
+    - ARG ANSIBLE_GALAXY_SERVER_LIST
+    - ARG ANSIBLE_GALAXY_SERVER_CERTIFIED_URL
+    - ARG ANSIBLE_GALAXY_SERVER_CERTIFIED_AUTH_URL
+    - ARG ANSIBLE_GALAXY_SERVER_CERTIFIED_TOKEN
+    - ARG ANSIBLE_GALAXY_SERVER_VALIDATED_URL
+    - ARG ANSIBLE_GALAXY_SERVER_VALIDATED_AUTH_URL
+    - ARG ANSIBLE_GALAXY_SERVER_VALIDATED_TOKEN
+    - ARG ANSIBLE_GALAXY_SERVER_COMMUNITY_URL
+
+  append_final:
+    - RUN $PYCMD -m pip check
+    - >
+      RUN $PKGMGR update -y &&
+      $PKGMGR clean all &&
+      rm -rf /var/cache/{dnf,yum} &&
+      rm -rf /var/lib/dnf/history.* &&
+      rm -rf /var/log/*
